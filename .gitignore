@@ -1,0 +1,25 @@
+# Environment variables
+.env
+
+# SSL certificates
+certbot/conf/
+certbot/www/
+
+# Logs
+logs/
+*.log
+
+# Database backups
+*.sql
+backup_*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker volumes
+postgres_data/
+
+# OS generated files
+.DS_Store
+Thumbs.db 
