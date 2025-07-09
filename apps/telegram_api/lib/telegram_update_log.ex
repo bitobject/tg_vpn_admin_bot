@@ -4,8 +4,8 @@ defmodule TelegramUpdateLog do
   import Ecto.Changeset
 
   schema "telegram_update_logs" do
-    field :user_id, :integer
-    field :update, :map
+    field(:user_id, :integer)
+    field(:update, :map)
     timestamps()
   end
 

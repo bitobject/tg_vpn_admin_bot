@@ -44,6 +44,7 @@ defmodule AdminApi.Guardian do
     case refresh(refresh_token, ttl: {1, :day}) do
       {:ok, _old_stuff, {new_token, new_claims}} ->
         {:ok, new_token, new_claims}
+
       {:error, reason} ->
         {:error, reason}
     end

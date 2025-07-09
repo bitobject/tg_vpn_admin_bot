@@ -19,7 +19,8 @@ config :admin_api,
 # Configure Guardian for JWT
 config :admin_api, AdminApi.Guardian,
   issuer: "telegram_admin_api",
-  secret_key: System.get_env("GUARDIAN_SECRET_KEY") || "your-secret-key-here-change-in-production",
+  secret_key:
+    System.get_env("GUARDIAN_SECRET_KEY") || "your-secret-key-here-change-in-production",
   ttl: {1, :day},
   refresh_ttl: {30, :days}
 
@@ -33,12 +34,12 @@ config :admin_api, AdminApiWeb.Endpoint,
   ],
   pubsub_server: AdminApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"],
-  secret_key_base: System.get_env("SECRET_KEY_BASE") || "your-secret-key-base-here-change-in-production"
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") || "your-secret-key-base-here-change-in-production"
 
 # Configure rate limiting
 config :hammer,
-  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 4,
-                                 cleanup_interval_ms: 60_000 * 10]}
+  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 4, cleanup_interval_ms: 60_000 * 10]}
 
 # Configure logger
 config :logger, :console,

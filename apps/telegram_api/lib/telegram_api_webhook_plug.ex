@@ -10,15 +10,19 @@ defmodule TelegramApi.WebhookPlug do
 
   def call(%Plug.Conn{method: "POST"} = conn, _opts) do
     {:ok, body, conn} = read_body(conn)
+
     case Jason.decode(body) do
       {:ok, update} ->
         log_update(update)
         process_update(update)
+
       {:error, _} ->
         Logger.error("Invalid JSON in webhook")
     end
+
     send_resp(conn, 200, "ok")
   end
+
   def call(conn, _opts), do: send_resp(conn, 405, "Method Not Allowed")
 
   defp log_update(update) do
@@ -31,6 +35,7 @@ defmodule TelegramApi.WebhookPlug do
     TelegramContext.create_or_update_user(attrs)
     send_greeting(from)
   end
+
   defp process_update(_), do: :ok
 
   defp get_user_id(%{"message" => %{"from" => %{"id" => id}}}), do: id
@@ -56,7 +61,11 @@ defmodule TelegramApi.WebhookPlug do
     chat_id = from["id"]
     lang = from["language_code"] || "en"
     text = greeting_text(lang)
-    send_fun = Application.get_env(:telegram_api, :telegram_client_send_message) || &TelegramApi.TelegramClient.send_message/2
+
+    send_fun =
+      Application.get_env(:telegram_api, :telegram_client_send_message) ||
+        (&TelegramApi.TelegramClient.send_message/2)
+
     send_fun.(chat_id, text)
   end
 

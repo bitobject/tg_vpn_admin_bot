@@ -19,6 +19,7 @@ defmodule AdminApiWeb.Plugs.Authorize do
         |> put_status(:unauthorized)
         |> json(%{error: "Authentication required"})
         |> halt()
+
       admin ->
         if has_role?(admin, required_role) do
           conn

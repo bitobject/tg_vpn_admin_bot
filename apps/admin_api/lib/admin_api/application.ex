@@ -13,7 +13,7 @@ defmodule AdminApi.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: AdminApi.PubSub},
       # Start the Endpoint (http/https)
-      AdminApiWeb.Endpoint,
+      AdminApiWeb.Endpoint
       # Start a worker by calling: AdminApi.Worker.start_link(arg)
       # {AdminApi.Worker, arg}
     ]

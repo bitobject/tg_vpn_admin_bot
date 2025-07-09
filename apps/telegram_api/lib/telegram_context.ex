@@ -9,7 +9,7 @@ defmodule TelegramContext do
   def get_user(id), do: Repo.get(TelegramUser, id)
 
   def get_user_by_username(username) when is_binary(username) do
-    Repo.one(from u in TelegramUser, where: u.username == ^username)
+    Repo.one(from(u in TelegramUser, where: u.username == ^username))
   end
 
   def create_or_update_user(attrs) do
@@ -18,6 +18,7 @@ defmodule TelegramContext do
         %TelegramUser{}
         |> TelegramUser.changeset(attrs)
         |> Repo.insert()
+
       user ->
         user
         |> TelegramUser.changeset(attrs)

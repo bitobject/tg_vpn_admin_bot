@@ -7,11 +7,15 @@ defmodule AdminApiWeb.Plugs.RateLimit do
   import Phoenix.Controller
 
   def init(opts) do
-    Keyword.merge([
-      limit: 100,
-      window: 60_000, # 1 minute
-      key: :ip
-    ], opts)
+    Keyword.merge(
+      [
+        limit: 100,
+        # 1 minute
+        window: 60_000,
+        key: :ip
+      ],
+      opts
+    )
   end
 
   def call(conn, opts) do
@@ -22,6 +26,7 @@ defmodule AdminApiWeb.Plugs.RateLimit do
     case Hammer.check_rate(key, window, limit) do
       {:allow, _count} ->
         conn
+
       {:deny, _limit} ->
         conn
         |> put_status(:too_many_requests)

@@ -17,10 +17,12 @@ defmodule AdminApiWeb.Plugs.Authenticate do
         |> put_status(:unauthorized)
         |> json(%{error: "Authentication required"})
         |> halt()
+
       token ->
         case Guardian.resource_from_token(token) do
           {:ok, admin, _claims} ->
             assign(conn, :current_admin, admin)
+
           {:error, _reason} ->
             conn
             |> put_status(:unauthorized)

@@ -13,9 +13,13 @@ defmodule TelegramApi.Application do
       else
         [
           TelegramApi.Repo,
-          {Plug.Cowboy, scheme: :http, plug: TelegramApi.WebhookPlug, options: [port: 4002, dispatch: dispatch()]}
+          {Plug.Cowboy,
+           scheme: :http,
+           plug: TelegramApi.WebhookPlug,
+           options: [port: 4002, dispatch: dispatch()]}
         ]
       end
+
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: TelegramApi.Supervisor]
@@ -24,10 +28,11 @@ defmodule TelegramApi.Application do
 
   defp dispatch do
     [
-      {:_, [
-        {"/webhook", TelegramApi.WebhookPlug, []},
-        {:_, Plug.Cowboy.Handler, {TelegramApi.WebhookPlug, []}}
-      ]}
+      {:_,
+       [
+         {"/webhook", TelegramApi.WebhookPlug, []},
+         {:_, Plug.Cowboy.Handler, {TelegramApi.WebhookPlug, []}}
+       ]}
     ]
   end
 end

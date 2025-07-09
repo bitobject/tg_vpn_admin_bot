@@ -4,7 +4,7 @@ defmodule AdminApiWeb.AdminController do
   alias AdminApiWeb.AdminContext
   alias AdminApiWeb.Admin
 
-    @doc """
+  @doc """
   Lists all admins.
   """
   def index(conn, _params) do

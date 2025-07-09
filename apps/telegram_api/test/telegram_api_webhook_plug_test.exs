@@ -17,6 +17,7 @@ defmodule TelegramApi.WebhookPlugTest do
     me = self()
     :me = me
     old_send = Application.get_env(:telegram_api, :telegram_client_send_message)
+
     Application.put_env(:telegram_api, :telegram_client_send_message, fn chat_id, text ->
       send(me, {:sent_greeting, chat_id, text})
       :ok
@@ -35,11 +36,15 @@ defmodule TelegramApi.WebhookPlugTest do
           "language_code" => "ru"
         },
         "chat" => %{"id" => 123},
-        "date" => 1680000000,
+        "date" => 1_680_000_000,
         "text" => "/start"
       }
     }
-    conn = conn(:post, "/webhook", Jason.encode!(update)) |> put_req_header("content-type", "application/json")
+
+    conn =
+      conn(:post, "/webhook", Jason.encode!(update))
+      |> put_req_header("content-type", "application/json")
+
     resp = TelegramApi.WebhookPlug.call(conn, @opts)
     assert resp.status == 200
     assert resp.resp_body == "ok"
@@ -51,7 +56,7 @@ defmodule TelegramApi.WebhookPlugTest do
     assert user.language_code == "ru"
 
     # Проверяем, что апдейт залогирован
-    log = Repo.one(from l in TelegramUpdateLog, where: l.user_id == 123)
+    log = Repo.one(from(l in TelegramUpdateLog, where: l.user_id == 123))
     assert log
     assert log.update["message"]["text"] == "/start"
 
@@ -60,7 +65,11 @@ defmodule TelegramApi.WebhookPlugTest do
 
     # Обновляем пользователя
     update2 = put_in(update["message"]["from"]["first_name"], "Petr")
-    conn2 = conn(:post, "/webhook", Jason.encode!(update2)) |> put_req_header("content-type", "application/json")
+
+    conn2 =
+      conn(:post, "/webhook", Jason.encode!(update2))
+      |> put_req_header("content-type", "application/json")
+
     TelegramApi.WebhookPlug.call(conn2, @opts)
     user2 = Repo.get(TelegramUser, 123)
     assert user2.first_name == "Petr"

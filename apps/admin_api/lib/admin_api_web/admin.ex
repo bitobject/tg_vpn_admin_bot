@@ -6,12 +6,12 @@ defmodule AdminApiWeb.Admin do
   @primary_key {:id, :binary_id, autogenerate: true}
   @derive {Phoenix.Param, key: :id}
   schema "admins" do
-    field :email, :string
-    field :username, :string
-    field :password_hash, :string
-    field :role, Ecto.Enum, values: [:admin, :superadmin]
-    field :active, :boolean, default: true
-    field :last_login_at, :utc_datetime
+    field(:email, :string)
+    field(:username, :string)
+    field(:password_hash, :string)
+    field(:role, Ecto.Enum, values: [:admin, :superadmin])
+    field(:active, :boolean, default: true)
+    field(:last_login_at, :utc_datetime)
     timestamps()
   end
 

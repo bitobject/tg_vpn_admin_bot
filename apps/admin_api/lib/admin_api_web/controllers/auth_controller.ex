@@ -88,6 +88,7 @@ defmodule AdminApiWeb.AuthController do
 
       token ->
         Guardian.revoke_token(token)
+
         conn
         |> put_status(:ok)
         |> json(%{message: "Successfully logged out"})
