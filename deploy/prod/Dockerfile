@@ -1,5 +1,5 @@
 # Multi-stage build optimized for both ARM64 (M1) и AMD64 (Ubuntu)
-FROM elixir:1.16 AS builder
+FROM hexpm/elixir:1.18.4-otp-27-debian-bookworm-20240402 as build
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y build-essential git curl
@@ -37,7 +37,7 @@ COPY apps ./apps
 RUN mix do compile, release --overwrite
 
 # Runtime stage
-FROM debian:bullseye-slim AS runtime
+FROM debian:bookworm-slim AS runtime
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y openssl ncurses-bin libstdc++6 curl bash ca-certificates
