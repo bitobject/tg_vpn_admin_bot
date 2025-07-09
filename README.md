@@ -1,257 +1,301 @@
-# Telegram Admin API - Deployment Guide
+# Telegram Admin API
 
-Этот проект настроен для деплоя через Docker Compose с Nginx и автоматическим SSL через Let's Encrypt.
+REST API для управления Telegram ботом с JWT аутентификацией и PostgreSQL.
 
 ## Архитектура
 
-- **Nginx**: Обратный прокси с SSL терминацией
-- **Elixir App**: Основное приложение на Phoenix
-- **PostgreSQL**: База данных
-- **Certbot**: Автоматическое управление SSL сертификатами
+Проект построен как umbrella приложение с следующими компонентами:
+
+- **admin_api** - REST API с Phoenix
+- **core** - Бизнес-логика и схемы данных
+- **shared** - Общие утилиты
+- **telegram_api** - Интеграция с Telegram API
 
 ## Требования
 
-- Docker и Docker Compose
-- Домен, указывающий на сервер (body-architect.ru)
-- Открытые порты 80 и 443
+- Elixir 1.16+
+- Erlang/OTP 25+
+- PostgreSQL 12+
+- Node.js 18+ (для assets)
 
-## Быстрый старт
+## Установка
 
-### 1. Настройка переменных окружения
-
+1. Клонируйте репозиторий:
 ```bash
-cd deploy
-cp env.example .env
+git clone <repository-url>
+cd telegram-admin-api
 ```
 
-Отредактируйте `.env` файл:
-
+2. Установите зависимости:
 ```bash
-# Database Configuration
-DB_NAME=telegram_admin_api_prod
-DB_USERNAME=postgres
-DB_PASSWORD=your_secure_password_here
-
-# Application Configuration
-HOST=body-architect.ru
-SECRET_KEY_BASE=your_secret_key_base_here
-GUARDIAN_SECRET_KEY=your_guardian_secret_key_here
-POOL_SIZE=10
-
-# Let's Encrypt Configuration
-CERTBOT_EMAIL=your_email@example.com
+mix deps.get
 ```
 
-### 2. Генерация секретных ключей
-
+3. Настройте базу данных:
 ```bash
-# Автоматическая генерация всех секретных ключей
-./scripts/generate-secrets.sh
+# Создайте базу данных
+createdb telegram_admin_api_dev
+
+# Запустите миграции
+mix ecto.migrate
+
+# Создайте seed данные (первый админ)
+mix run apps/core/priv/repo/seeds.exs
 ```
 
-### 3. Деплой
-
+4. Настройте переменные окружения:
 ```bash
-# Сделать скрипты исполняемыми
-chmod +x scripts/*.sh
-
-# Запустить деплой
-./scripts/deploy.sh
+export DB_USERNAME=postgres
+export DB_PASSWORD=postgres
+export DB_HOST=localhost
+export DB_NAME=telegram_admin_api_dev
+export GUARDIAN_SECRET_KEY="your-secret-key-here"
 ```
 
-## Структура файлов
-
-```
-deploy/
-├── docker-compose.yml          # Основная конфигурация Docker Compose
-├── Dockerfile                  # Образ для Elixir приложения
-├── .env                        # Переменные окружения (создать из env.example)
-├── env.example                 # Пример переменных окружения
-├── nginx/
-│   ├── nginx.conf             # Основная конфигурация Nginx
-│   └── conf.d/
-│       └── default.conf       # Конфигурация виртуального хоста
-├── scripts/
-│   ├── deploy.sh              # Основной скрипт деплоя
-│   ├── init-letsencrypt.sh    # Инициализация SSL сертификатов
-│   └── renew-certs.sh         # Обновление сертификатов
-├── certbot/                   # Сертификаты Let's Encrypt (создается автоматически)
-│   ├── conf/
-│   └── www/
-└── postgres/                  # Инициализация базы данных
-    └── init/
-```
-
-## Управление сервисами
-
-### Запуск всех сервисов
+5. Запустите сервер:
 ```bash
-docker-compose up -d
+mix phx.server
 ```
 
-### Остановка всех сервисов
-```bash
-docker-compose down
+API будет доступен по адресу: http://localhost:4000
+
+## API Endpoints
+
+### Аутентификация
+
+#### POST /api/v1/auth/login
+Вход в систему с логином/паролем.
+
+**Request:**
+```json
+{
+  "login": "admin@example.com",
+  "password": "admin123"
+}
 ```
 
-### Просмотр логов
-```bash
-# Все сервисы
-docker-compose logs -f
-
-# Конкретный сервис
-docker-compose logs -f app
-docker-compose logs -f nginx
-docker-compose logs -f postgres
+**Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "admin": {
+    "id": "uuid",
+    "email": "admin@example.com",
+    "username": "admin",
+    "role": "admin"
+  }
+}
 ```
 
-### Перезапуск сервиса
-```bash
-docker-compose restart app
+#### POST /api/v1/auth/refresh
+Обновление JWT токена.
+
+**Request:**
+```json
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
 ```
 
-## SSL сертификаты
+#### GET /api/v1/auth/me
+Получение профиля текущего администратора.
 
-### Первоначальная настройка
-```bash
-./scripts/init-letsencrypt.sh body-architect.ru
+**Headers:**
+```
+Authorization: Bearer <token>
 ```
 
-### Автоматическое обновление
-Сертификаты обновляются автоматически каждые 6 часов через Nginx.
+#### POST /api/v1/auth/logout
+Выход из системы.
 
-Для ручного обновления:
-```bash
-./scripts/renew-certs.sh
+**Headers:**
+```
+Authorization: Bearer <token>
 ```
 
-### Настройка cron для автоматического обновления
-```bash
-# Добавить в crontab (crontab -e)
-0 12 * * * cd /path/to/deploy && ./scripts/renew-certs.sh >> logs/cert-renewal.log 2>&1
+### Управление администраторами (только для админов)
+
+#### GET /api/v1/admins
+Список всех администраторов.
+
+#### POST /api/v1/admins
+Создание нового администратора.
+
+**Request:**
+```json
+{
+  "admin": {
+    "email": "admin2@example.com",
+    "username": "admin2",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "role": "admin"
+  }
+}
 ```
 
-## Мониторинг и логирование
+#### GET /api/v1/admins/:id
+Получение администратора по ID.
 
-### Health checks
-- **Nginx**: `http://localhost/health`
-- **App**: `https://body-architect.ru/health`
-- **Database**: Встроенная проверка в Docker Compose
+#### PUT /api/v1/admins/:id
+Обновление администратора.
 
-### Проверка конфигурации
-```bash
-# Проверка всех переменных окружения
-./scripts/check-config.sh
+#### DELETE /api/v1/admins/:id
+Удаление администратора.
+
+#### PUT /api/v1/admins/:id/password
+Обновление пароля администратора.
+
+**Request:**
+```json
+{
+  "password": {
+    "password": "newpassword123",
+    "password_confirmation": "newpassword123"
+  }
+}
 ```
 
-### Логи
-Логи сохраняются в:
-- `logs/` - Логи приложения
-- Docker volumes для контейнеров
+### Системные endpoints
 
-### Мониторинг сертификатов
-```bash
-# Проверка статуса сертификатов
-docker-compose run --rm certbot certificates
-
-# Проверка срока действия
-docker-compose run --rm certbot certificates | grep -A 2 "VALID"
-
-# Подробная проверка сертификатов
-./scripts/check-certs.sh
-```
+#### GET /api/v1/health
+Проверка состояния API.
 
 ## Безопасность
 
-### Настройки Nginx
-- Rate limiting для API endpoints
-- Строгие заголовки безопасности
-- HSTS включен
-- Современные SSL шифры
+### JWT Токены
+- Access token: 1 день
+- Refresh token: 30 дней
+- Автоматическое обновление токенов
+
+### Rate Limiting
+- 100 запросов в минуту на IP
+- Настраивается в конфигурации
+
+### Роли администраторов
+- **admin** - полный доступ ко всем функциям
+
+### Хеширование паролей
+- bcrypt с cost factor 12
+- Автоматическое хеширование при создании/обновлении
+
+## Разработка
+
+### Запуск в development режиме
+```bash
+mix phx.server
+```
+
+### Тестирование
+```bash
+mix test
+```
+
+### Линтинг
+```bash
+mix format
+mix credo
+```
+
+### Миграции
+```bash
+# Создание новой миграции
+mix ecto.gen.migration create_table_name
+
+# Запуск миграций
+mix ecto.migrate
+
+# Откат миграции
+mix ecto.rollback
+```
+
+## Конфигурация
 
 ### Переменные окружения
-- Все секреты хранятся в `.env` файле
-- Файл `.env` добавлен в `.gitignore`
-- Используются безопасные пароли
 
-### Обновления
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| `DB_USERNAME` | Имя пользователя БД | postgres |
+| `DB_PASSWORD` | Пароль БД | postgres |
+| `DB_HOST` | Хост БД | localhost |
+| `DB_NAME` | Имя БД | telegram_admin_api_dev |
+| `GUARDIAN_SECRET_KEY` | Секретный ключ для JWT | (генерируется) |
+| `POOL_SIZE` | Размер пула соединений | 10 |
+
+### Production настройки
+
+1. Установите секретный ключ:
 ```bash
-# Обновление приложения
-git pull
-docker-compose build --no-cache app
-docker-compose up -d app
-
-# Обновление всех сервисов
-docker-compose pull
-docker-compose up -d
+export GUARDIAN_SECRET_KEY=$(mix phx.gen.secret)
 ```
 
-## Резервное копирование
-
-### База данных
+2. Настройте SSL:
 ```bash
-# Создание бэкапа
-docker-compose exec postgres pg_dump -U $DB_USERNAME $DB_NAME > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Восстановление
-docker-compose exec -T postgres psql -U $DB_USERNAME $DB_NAME < backup_file.sql
+mix phx.gen.cert
 ```
 
-### Сертификаты
+3. Запустите в production:
 ```bash
-# Копирование сертификатов
-cp -r certbot/conf backup_certs_$(date +%Y%m%d_%H%M%S)/
+MIX_ENV=prod mix phx.server
 ```
 
-## Troubleshooting
+## Мониторинг
 
-### Проблемы с SSL
+### Health Check
 ```bash
-# Проверка сертификатов
-docker-compose run --rm certbot certificates
-
-# Принудительное обновление
-docker-compose run --rm certbot renew --force-renewal
+curl http://localhost:4000/api/v1/health
 ```
 
-### Проблемы с приложением
-```bash
-# Проверка логов
-docker-compose logs app
+### Логирование
+- Структурированные логи в JSON формате
+- Уровни: debug, info, warn, error
+- Request ID для трассировки
 
-# Перезапуск приложения
-docker-compose restart app
+### Telemetry
+- Метрики Phoenix
+- Метрики базы данных
+- VM метрики
 
-# Проверка переменных окружения
-docker-compose exec app env | grep -E "(DB_|HOST|SECRET)"
+## Лучшие практики
+
+### API Design
+- RESTful endpoints
+- JSON responses
+- Proper HTTP status codes
+- OpenAPI документация
+
+### Безопасность
+- JWT аутентификация
+- Rate limiting
+- Валидация входных данных
+- Хеширование паролей
+
+### Производительность
+- Connection pooling
+- Индексы в БД
+- Кэширование (готово к добавлению)
+
+### Тестирование
+- Unit тесты
+- Integration тесты
+- API тесты
+
+## Структура проекта
+
+```
+telegram-admin-api/
+├── apps/
+│   ├── admin_api/          # REST API
+│   ├── core/              # Бизнес-логика
+│   ├── shared/            # Общие утилиты
+│   └── telegram_api/      # Telegram интеграция
+├── config/                # Конфигурация
+├── deploy/                # Деплой
+└── mix.exs               # Корневой mix файл
 ```
 
-### Проблемы с базой данных
-```bash
-# Проверка подключения
-docker-compose exec postgres pg_isready -U $DB_USERNAME
+## Лицензия
 
-# Проверка логов
-docker-compose logs postgres
-```
+MIT License
 
-## Производительность
-
-### Настройки Nginx
-- Gzip сжатие включено
-- HTTP/2 поддержка
-- Кэширование статических файлов
-- Rate limiting для защиты от DDoS
-
-### Настройки приложения
-- Connection pooling для базы данных
-- Оптимизированные настройки Phoenix
-- Health checks для всех сервисов
-
-## Поддержка
-
-При возникновении проблем:
-1. Проверьте логи: `docker-compose logs -f`
-2. Проверьте статус сервисов: `docker-compose ps`
-3. Проверьте health checks
-4. Убедитесь, что все переменные окружения настроены правильно 
