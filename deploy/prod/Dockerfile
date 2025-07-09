@@ -1,5 +1,5 @@
 # Multi-stage build optimized for both ARM64 (M1) и AMD64 (Ubuntu)
-FROM hexpm/elixir:1.18.4-otp-27-debian-bookworm-20240402 as build
+FROM hexpm/elixir:1.18.2-erlang-27.2-debian-bookworm-20250113-slim as build
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y build-essential git curl
