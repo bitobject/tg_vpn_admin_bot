@@ -5,6 +5,7 @@ services:
   postgres:
     image: postgres:15-alpine
     env_file:
+      - ./deploy/prod/env_file
       - env_file
     container_name: telegram_admin_postgres
     restart: unless-stopped
@@ -27,6 +28,7 @@ services:
   app:
     image: telegram-admin-api:latest
     env_file:
+      - ./deploy/prod/env_file
       - env_file
     container_name: telegram_admin_app
     restart: unless-stopped
@@ -56,6 +58,7 @@ services:
   nginx:
     image: telegram-admin-nginx:latest
     env_file:
+      - ./deploy/prod/env_file
       - env_file
     container_name: telegram_admin_nginx
     restart: unless-stopped
