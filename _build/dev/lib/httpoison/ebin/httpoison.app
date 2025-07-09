@@ -1,8 +1,5 @@
 {application,httpoison,
-             [{optional_applications,[]},
-              {applications,[kernel,stdlib,elixir,hackney]},
-              {description,"Yet Another HTTP client for Elixir powered by hackney"},
-              {modules,['Elixir.HTTPoison','Elixir.HTTPoison.AsyncChunk',
+             [{modules,['Elixir.HTTPoison','Elixir.HTTPoison.AsyncChunk',
                         'Elixir.HTTPoison.AsyncEnd',
                         'Elixir.HTTPoison.AsyncHeaders',
                         'Elixir.HTTPoison.AsyncRedirect',
@@ -13,5 +10,8 @@
                         'Elixir.HTTPoison.MaybeRedirect',
                         'Elixir.HTTPoison.Request',
                         'Elixir.HTTPoison.Response']},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,elixir,hackney]},
+              {description,"Yet Another HTTP client for Elixir powered by hackney"},
               {registered,[]},
               {vsn,"2.2.3"}]}.

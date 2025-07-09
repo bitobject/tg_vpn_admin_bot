@@ -1,8 +1,5 @@
 {application,elixir_make,
-             [{optional_applications,[]},
-              {applications,[kernel,stdlib,elixir,logger]},
-              {description,"A Make compiler for Mix"},
-              {modules,['Elixir.ElixirMake.Artefact',
+             [{modules,['Elixir.ElixirMake.Artefact',
                         'Elixir.ElixirMake.Compiler',
                         'Elixir.ElixirMake.Downloader',
                         'Elixir.ElixirMake.Downloader.Httpc',
@@ -10,5 +7,8 @@
                         'Elixir.Mix.Tasks.Compile.ElixirMake',
                         'Elixir.Mix.Tasks.ElixirMake.Checksum',
                         'Elixir.Mix.Tasks.ElixirMake.Precompile']},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,elixir,logger]},
+              {description,"A Make compiler for Mix"},
               {registered,[]},
               {vsn,"0.9.0"}]}.

@@ -1,0 +1,15 @@
+# Database Configuration
+DB_NAME=telegram_admin_api_dev
+DB_USERNAME=postgres
+DB_PASSWORD=devpassword
+DB_HOST=postgres
+
+# Application Configuration
+HOST=localhost
+SECRET_KEY_BASE=devsecretkeybase
+GUARDIAN_SECRET_KEY=devguardiansecret
+POOL_SIZE=10
+PORT=4000
+
+# Telegram Bot Token
+TELEGRAM_BOT_TOKEN=dev-bot-token

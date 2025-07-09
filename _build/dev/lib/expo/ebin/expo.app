@@ -1,8 +1,5 @@
 {application,expo,
-             [{optional_applications,[]},
-              {applications,[kernel,stdlib,elixir]},
-              {description,"Low-level Gettext file handling (.po/.pot/.mo file writer and parser)."},
-              {modules,['Elixir.Expo.MO','Elixir.Expo.MO.Composer',
+             [{modules,['Elixir.Expo.MO','Elixir.Expo.MO.Composer',
                         'Elixir.Expo.MO.InvalidFileError',
                         'Elixir.Expo.MO.Parser',
                         'Elixir.Expo.MO.UnsupportedVersionError',
@@ -22,5 +19,8 @@
                         'Elixir.Mix.Tasks.Expo.Msgfmt',
                         'Elixir.Mix.Tasks.Expo.Msguniq',
                         expo_plural_forms_parser,expo_po_parser]},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,elixir]},
+              {description,"Low-level Gettext file handling (.po/.pot/.mo file writer and parser)."},
               {registered,[]},
               {vsn,"1.1.0"}]}.

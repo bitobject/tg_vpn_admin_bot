@@ -1,8 +1,5 @@
 {application,ex_json_schema,
-             [{optional_applications,[]},
-              {applications,[kernel,stdlib,elixir,decimal]},
-              {description,"  A JSON Schema validator with full support for the draft 4 specification\n  and zero dependencies.\n"},
-              {modules,['Elixir.ExJsonSchema','Elixir.ExJsonSchema.Schema',
+             [{modules,['Elixir.ExJsonSchema','Elixir.ExJsonSchema.Schema',
                         'Elixir.ExJsonSchema.Schema.Draft4',
                         'Elixir.ExJsonSchema.Schema.Draft6',
                         'Elixir.ExJsonSchema.Schema.Draft7',
@@ -108,5 +105,8 @@
                         'Elixir.String.Chars.ExJsonSchema.Validator.Error.Required',
                         'Elixir.String.Chars.ExJsonSchema.Validator.Error.Type',
                         'Elixir.String.Chars.ExJsonSchema.Validator.Error.UniqueItems']},
+              {optional_applications,[]},
+              {applications,[kernel,stdlib,elixir,decimal]},
+              {description,"  A JSON Schema validator with full support for the draft 4 specification\n  and zero dependencies.\n"},
               {registered,[]},
               {vsn,"0.11.1"}]}.
