@@ -50,7 +50,7 @@ RUN addgroup --gid 1000 app && \
 WORKDIR /app
 
 # Copy release from builder
-COPY --from=builder --chown=app:app /app/_build/prod/rel/telegram_admin_api ./
+COPY --from=build --chown=app:app /app/_build/prod/rel/telegram_admin_api ./
 
 # Create necessary directories
 RUN mkdir -p /app/logs && \
