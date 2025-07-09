@@ -39,8 +39,15 @@ RUN mix do compile, release --overwrite
 # Runtime stage
 FROM debian:bookworm-slim AS runtime
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y openssl ncurses-bin libstdc++6 curl bash ca-certificates
+# Install runtime dependencies и локаль
+RUN apt-get update && apt-get install -y openssl ncurses-bin libstdc++6 curl bash ca-certificates locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+ENV ELIXIR_ERL_OPTIONS="+fnu"
 
 # Create app user
 RUN addgroup --gid 1000 app && \
