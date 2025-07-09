@@ -13,8 +13,7 @@ defmodule TelegramApi.TelegramClient do
   end
 
   defp bot_token do
-    System.get_env("TELEGRAM_BOT_TOKEN") ||
-      Application.get_env(:telegram_api, :bot_token) ||
+    Application.get_env(:telegram_api, :bot_token) ||
       raise "TELEGRAM_BOT_TOKEN not set"
   end
 end

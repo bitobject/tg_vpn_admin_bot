@@ -34,12 +34,17 @@ config :admin_api, AdminApiWeb.Endpoint,
   ],
   pubsub_server: AdminApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"],
+  port: String.to_integer(System.get_env("PORT") || "4000"),
   secret_key_base:
     System.get_env("SECRET_KEY_BASE") || "your-secret-key-base-here-change-in-production"
 
 # Configure rate limiting
 config :hammer,
   backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 4, cleanup_interval_ms: 60_000 * 10]}
+
+# Telegram API bot token (and other settings)
+config :telegram_api,
+  bot_token: System.get_env("TELEGRAM_BOT_TOKEN")
 
 # Configure logger
 config :logger, :console,
