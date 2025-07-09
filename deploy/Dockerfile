@@ -21,10 +21,9 @@ COPY mix.exs mix.lock ./
 COPY config ./config
 
 # Create apps directory structure and copy mix.exs files
-RUN mkdir -p apps/admin_api apps/core apps/shared apps/telegram_api
+RUN mkdir -p apps/admin_api apps/core apps/telegram_api
 COPY apps/admin_api/mix.exs apps/admin_api/
 COPY apps/core/mix.exs apps/core/
-COPY apps/shared/mix.exs apps/shared/
 COPY apps/telegram_api/mix.exs apps/telegram_api/
 
 # Install and compile dependencies (cached layer)

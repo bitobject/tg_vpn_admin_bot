@@ -1,14 +1,14 @@
 defmodule AdminApiWeb.AdminController do
   use AdminApiWeb, :controller
 
-  alias Core.Accounts
-  alias Core.Accounts.Admin
+  alias AdminApiWeb.AdminContext
+  alias AdminApiWeb.Admin
 
     @doc """
   Lists all admins.
   """
   def index(conn, _params) do
-    admins = Accounts.list_admins()
+    admins = AdminContext.list_admins()
 
     conn
     |> put_status(:ok)
@@ -22,7 +22,7 @@ defmodule AdminApiWeb.AdminController do
   """
   def show(conn, %{"id" => id}) do
     try do
-      admin = Accounts.get_admin!(id)
+      admin = AdminContext.get_admin!(id)
 
       conn
       |> put_status(:ok)
@@ -39,7 +39,7 @@ defmodule AdminApiWeb.AdminController do
   Creates a new admin.
   """
   def create(conn, %{"admin" => admin_params}) do
-    case Accounts.create_admin(admin_params) do
+    case AdminContext.create_admin(admin_params) do
       {:ok, admin} ->
         conn
         |> put_status(:created)
@@ -63,9 +63,9 @@ defmodule AdminApiWeb.AdminController do
   """
   def update(conn, %{"id" => id, "admin" => admin_params}) do
     try do
-      admin = Accounts.get_admin!(id)
+      admin = AdminContext.get_admin!(id)
 
-      case Accounts.update_admin(admin, admin_params) do
+      case AdminContext.update_admin(admin, admin_params) do
         {:ok, updated_admin} ->
           conn
           |> put_status(:ok)
@@ -91,45 +91,13 @@ defmodule AdminApiWeb.AdminController do
   end
 
   @doc """
-  Updates an admin's password.
-  """
-  def update_password(conn, %{"id" => id, "password" => password_params}) do
-    try do
-      admin = Accounts.get_admin!(id)
-
-      case Accounts.update_admin_password(admin, password_params) do
-        {:ok, _updated_admin} ->
-          conn
-          |> put_status(:ok)
-          |> json(%{message: "Password updated successfully"})
-
-        {:error, %Ecto.Changeset{} = changeset} ->
-          conn
-          |> put_status(:unprocessable_entity)
-          |> json(%{errors: format_changeset_errors(changeset)})
-      end
-    rescue
-      Ecto.NoResultsError ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "Admin not found"})
-    end
-  end
-
-  def update_password(conn, _params) do
-    conn
-    |> put_status(:bad_request)
-    |> json(%{error: "Admin ID and password parameters are required"})
-  end
-
-  @doc """
   Deletes an admin.
   """
   def delete(conn, %{"id" => id}) do
     try do
-      admin = Accounts.get_admin!(id)
+      admin = AdminContext.get_admin!(id)
 
-      case Accounts.delete_admin(admin) do
+      case AdminContext.delete_admin(admin) do
         {:ok, _admin} ->
           conn
           |> put_status(:ok)
@@ -160,7 +128,7 @@ defmodule AdminApiWeb.AdminController do
       email: admin.email,
       username: admin.username,
       role: admin.role,
-      is_active: admin.is_active,
+      is_active: admin.active,
       last_login_at: admin.last_login_at,
       inserted_at: admin.inserted_at,
       updated_at: admin.updated_at

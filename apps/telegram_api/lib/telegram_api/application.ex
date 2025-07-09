@@ -12,6 +12,7 @@ defmodule TelegramApi.Application do
         []
       else
         [
+          TelegramApi.Repo,
           {Plug.Cowboy, scheme: :http, plug: TelegramApi.WebhookPlug, options: [port: 4002, dispatch: dispatch()]}
         ]
       end

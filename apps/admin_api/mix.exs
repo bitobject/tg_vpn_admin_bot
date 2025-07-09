@@ -58,8 +58,7 @@ defmodule AdminApi.MixProject do
       {:junit_formatter, "~> 3.3", only: :test},
 
       # Sibling apps
-      {:core, in_umbrella: true},
-      {:shared, in_umbrella: true}
+      {:core, in_umbrella: true}
     ]
   end
 end

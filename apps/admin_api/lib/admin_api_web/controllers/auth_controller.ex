@@ -1,17 +1,17 @@
 defmodule AdminApiWeb.AuthController do
   use AdminApiWeb, :controller
 
-  alias Core.Accounts
+  alias AdminApiWeb.AdminContext
   alias AdminApi.Guardian
 
   @doc """
   Authenticates a user and returns JWT tokens.
   """
   def login(conn, %{"login" => login, "password" => password}) do
-    case Accounts.authenticate_admin(login, password) do
+    case AdminContext.authenticate_admin(login, password) do
       {:ok, admin} ->
         # Update last login timestamp
-        Accounts.update_admin_last_login(admin)
+        AdminContext.update_admin_last_login(admin)
 
         # Create tokens
         {:ok, token, _claims} = Guardian.create_token(admin)
@@ -107,7 +107,7 @@ defmodule AdminApiWeb.AuthController do
       email: admin.email,
       username: admin.username,
       role: admin.role,
-      is_active: admin.is_active,
+      is_active: admin.active,
       last_login_at: admin.last_login_at
     })
   end

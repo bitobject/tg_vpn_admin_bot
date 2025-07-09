@@ -1,0 +1,11 @@
+{application,core,
+             [{optional_applications,[]},
+              {applications,[kernel,stdlib,elixir,logger,runtime_tools,
+                             ecto_sql,postgrex,bcrypt_elixir,guardian,
+                             ecto_psql_extras,jason,timex]},
+              {description,"core"},
+              {modules,['Elixir.Core','Elixir.Core.Application',
+                        'Elixir.Core.Repo','Elixir.CoreWeb.Telemetry']},
+              {registered,[]},
+              {vsn,"0.1.0"},
+              {mod,{'Elixir.Core.Application',[]}}]}.

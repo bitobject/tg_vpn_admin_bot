@@ -12,7 +12,6 @@ defmodule TelegramAdminApi.MixProject do
           applications: [
             admin_api: :permanent,
             core: :permanent,
-            shared: :permanent,
             telegram_api: :permanent
           ]
         ]

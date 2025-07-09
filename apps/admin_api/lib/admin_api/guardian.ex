@@ -1,7 +1,7 @@
 defmodule AdminApi.Guardian do
   use Guardian, otp_app: :admin_api
 
-  alias Core.Accounts
+  alias AdminApiWeb.AdminContext
 
   def subject_for_token(%{id: id}, _claims) do
     sub = to_string(id)
@@ -13,7 +13,7 @@ defmodule AdminApi.Guardian do
   end
 
   def resource_from_claims(%{"sub" => id}) do
-    admin = Accounts.get_admin!(id)
+    admin = AdminContext.get_admin!(id)
     {:ok, admin}
   rescue
     Ecto.NoResultsError -> {:error, :resource_not_found}

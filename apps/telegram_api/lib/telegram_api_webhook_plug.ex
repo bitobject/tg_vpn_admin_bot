@@ -2,7 +2,7 @@ defmodule TelegramApi.WebhookPlug do
   import Plug.Conn
   require Logger
 
-  alias Core.Telegram
+  alias TelegramContext
 
   @behaviour Plug
 
@@ -23,12 +23,12 @@ defmodule TelegramApi.WebhookPlug do
 
   defp log_update(update) do
     user_id = get_user_id(update)
-    Telegram.log_update(%{user_id: user_id, update: update})
+    TelegramContext.log_update(%{user_id: user_id, update: update})
   end
 
-  defp process_update(%{"message" => %{"text" => "/start" = text, "from" => from}} = update) do
+  defp process_update(%{"message" => %{"text" => "/start" = _text, "from" => from}} = _update) do
     attrs = telegram_user_attrs(from)
-    Telegram.create_or_update_user(attrs)
+    TelegramContext.create_or_update_user(attrs)
     send_greeting(from)
   end
   defp process_update(_), do: :ok

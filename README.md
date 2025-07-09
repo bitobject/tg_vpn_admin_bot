@@ -8,7 +8,6 @@ REST API для управления Telegram ботом с JWT аутентиф
 
 - **admin_api** - REST API с Phoenix
 - **core** - Бизнес-логика и схемы данных
-- **shared** - Общие утилиты
 - **telegram_api** - Интеграция с Telegram API
 
 ## Требования
@@ -288,7 +287,6 @@ telegram-admin-api/
 ├── apps/
 │   ├── admin_api/          # REST API
 │   ├── core/              # Бизнес-логика
-│   ├── shared/            # Общие утилиты
 │   └── telegram_api/      # Telegram интеграция
 ├── config/                # Конфигурация
 ├── deploy/                # Деплой

@@ -10,10 +10,10 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias Core.Accounts
+alias AdminApiWeb.AdminContext
 
 # Create admin if it doesn't exist
-case Accounts.ensure_admin_exists(%{
+case AdminContext.ensure_admin_exists(%{
   email: "admin@example.com",
   username: "admin",
   password: "admin123",
