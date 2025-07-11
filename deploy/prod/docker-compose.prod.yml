@@ -5,9 +5,8 @@ services:
   postgres:
     image: postgres:15-alpine
     env_file:
-      - ./deploy/prod/env_file
-      - env_file
-    container_name: telegram_admin_postgres
+      - ./env_file
+    container_name: ${DB_HOST}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-telegram_admin_api_prod}
@@ -28,21 +27,10 @@ services:
   app:
     image: telegram-admin-api:latest
     env_file:
-      - ./deploy/prod/env_file
-      - env_file
-    container_name: telegram_admin_app
+      - ./env_file
+    container_name: APP_CONTAINER_NAME
     restart: unless-stopped
-    environment:
-      - DB_HOST=postgres
-      - DB_NAME=${DB_NAME:-telegram_admin_api_prod}
-      - DB_USERNAME=${DB_USERNAME:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - HOST=${HOST:-body-architect.ru}
-      - GUARDIAN_SECRET_KEY=${GUARDIAN_SECRET_KEY}
-      - POOL_SIZE=${POOL_SIZE:-10}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      - PHX_HOST=${HOST:-body-architect.ru}
-      - PORT=4000
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,9 +46,8 @@ services:
   nginx:
     image: telegram-admin-nginx:latest
     env_file:
-      - ./deploy/prod/env_file
-      - env_file
-    container_name: telegram_admin_nginx
+      - ./env_file
+    container_name: NGINX_CONTAINER_NAME
     restart: unless-stopped
     ports:
       - "80:80"
@@ -79,7 +66,7 @@ services:
     image: certbot/certbot
     env_file:
       - env_file
-    container_name: telegram_admin_certbot
+    container_name: CERTBOT_CONTAINER_NAME
     volumes:
       - /opt/telegram-admin-api/certbot/conf:/etc/letsencrypt
       - /opt/telegram-admin-api/certbot/www:/var/www/certbot
