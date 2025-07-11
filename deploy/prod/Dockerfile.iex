@@ -21,6 +21,9 @@ RUN apt-get update && \
 
 WORKDIR /app
 
+# Install Hex and Rebar
+RUN mix local.hex --force && mix local.rebar --force
+
 # Copy mix files and configs
 COPY mix.exs mix.lock ./
 COPY config ./config
@@ -64,8 +67,13 @@ RUN apt-get update && \
       inotify-tools && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy built app
-COPY --from=build /app .
+# Install Hex and Rebar in runtime image
+RUN mix local.hex --force && mix local.rebar --force
+
+# Copy built app, deps, and _build
+COPY --from=build /app/_build /app/_build
+COPY --from=build /app/deps /app/deps
+COPY --from=build /app ./
 
 # Expose the port your Phoenix app runs on (default 4000)
 EXPOSE 4000
