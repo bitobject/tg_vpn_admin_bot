@@ -70,4 +70,4 @@ COPY --from=build /app .
 # Expose the port your Phoenix app runs on (default 4000)
 EXPOSE 4000
 
-CMD ["tail -f /dev/null"]
+CMD ["tail", "-f", "/dev/null"]
