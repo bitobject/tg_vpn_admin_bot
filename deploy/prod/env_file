@@ -3,6 +3,7 @@ DB_NAME=telegram_admin_api_prod
 DB_USERNAME=postgres
 DB_PASSWORD=jzX4weZau5BjrKHTL4TPtQRDm/QCV7RRGamKgsnMBYI=
 DB_HOST=pg
+DB_PORT=5432
 
 # Application Configuration
 HOST=0.0.0.0

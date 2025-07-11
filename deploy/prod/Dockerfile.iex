@@ -1,0 +1,73 @@
+# Dockerfile for production-like environment with iex -S mix phx.server
+# This is NOT a release image, but a prod-mode image for debugging and hot code loading
+
+FROM hexpm/elixir:1.18.2-erlang-27.2-debian-bookworm-20250113-slim AS build
+
+ENV LANG=C.UTF-8 \
+    LANGUAGE=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Install build deps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      git \
+      curl \
+      nodejs \
+      npm \
+      inotify-tools \
+      postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy mix files and configs
+COPY mix.exs mix.lock ./
+COPY config ./config
+COPY rel ./rel
+
+# Prepare umbrella apps structure
+RUN mkdir -p apps/admin_api apps/core apps/telegram_api
+COPY apps/core/mix.exs apps/core/
+COPY apps/admin_api/mix.exs apps/admin_api/
+COPY apps/telegram_api/mix.exs apps/telegram_api/
+
+# Install deps
+RUN mix deps.get --only prod
+RUN MIX_ENV=prod mix deps.compile
+
+# Copy the rest of umbrella
+COPY . .
+
+# Compile the project
+RUN MIX_ENV=prod mix compile
+
+# Build assets if needed (optional, comment out if not using assets)
+# RUN cd apps/admin_api/assets && npm install && npm run deploy
+# RUN MIX_ENV=prod mix phx.digest
+
+# Final image
+FROM hexpm/elixir:1.18.2-erlang-27.2-debian-bookworm-20250113-slim
+
+ENV LANG=C.UTF-8 \
+    LANGUAGE=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    MIX_ENV=prod
+
+WORKDIR /app
+
+# Install runtime deps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      postgresql-client \
+      curl \
+      inotify-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy built app
+COPY --from=build /app .
+
+# Expose the port your Phoenix app runs on (default 4000)
+EXPOSE 4000
+
+CMD ["tail -f /dev/null"]
