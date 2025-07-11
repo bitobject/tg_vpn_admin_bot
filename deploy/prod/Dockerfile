@@ -19,6 +19,7 @@ ENV GUARDIAN_SECRET_KEY=placeholder
 # Copy dependency files first (for better layer caching)
 COPY mix.exs mix.lock ./
 COPY config ./config
+COPY rel ./rel
 
 # Create apps directory structure and copy mix.exs files
 RUN mkdir -p apps/admin_api apps/core apps/telegram_api
