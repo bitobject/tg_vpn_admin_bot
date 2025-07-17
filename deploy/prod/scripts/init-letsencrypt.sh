@@ -5,9 +5,9 @@
 
 set -e
 
-# Load environment variables if env_file exists
-if [ -f env_file ]; then
-    source env_file
+# Load environment variables if .env exists
+if [ -f .env ]; then
+    source .env
 fi
 
 # Check if domain is provided

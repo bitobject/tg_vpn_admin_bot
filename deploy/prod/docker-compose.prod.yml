@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:15-alpine
     env_file:
-      - ./env_file
+      - ./env
     container_name: ${DB_HOST}
     restart: unless-stopped
     environment:
@@ -26,7 +26,7 @@ services:
   app:
     image: telegram-admin-api:latest
     env_file:
-      - ./env_file
+      - ./env
     container_name: APP_CONTAINER_NAME
     restart: unless-stopped
 
@@ -40,38 +40,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # Nginx Reverse Proxy
-  nginx:
-    image: telegram-admin-nginx:latest
-    env_file:
-      - ./env_file
-    container_name: NGINX_CONTAINER_NAME
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /opt/telegram-admin-api/certbot/conf:/etc/letsencrypt
-      - /opt/telegram-admin-api/certbot/www:/var/www/certbot
-    depends_on:
-      - app
-    networks:
-      - telegram_admin_network
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
-  # Certbot for SSL certificates
-  certbot:
-    image: certbot/certbot
-    env_file:
-      - env_file
-    container_name: CERTBOT_CONTAINER_NAME
-    volumes:
-      - /opt/telegram-admin-api/certbot/conf:/etc/letsencrypt
-      - /opt/telegram-admin-api/certbot/www:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email -d ${HOST:-body-architect.ru}
-    networks:
-      - telegram_admin_network
 
 volumes:
   postgres_data:

@@ -6,7 +6,7 @@ services:
       dockerfile: deploy/dev/Dockerfile
     container_name: telegram_admin_app_dev
     env_file:
-      - env_file
+      - .env
     ports:
       - "4000:4000"
     depends_on:
@@ -28,18 +28,6 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
-    networks:
-      - telegram_admin_network
-
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: telegram_admin_nginx_dev
-    ports:
-      - "4003:4003"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-    depends_on:
-      - app
     networks:
       - telegram_admin_network
 

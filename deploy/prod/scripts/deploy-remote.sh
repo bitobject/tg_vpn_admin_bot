@@ -40,11 +40,11 @@ print_info "Deploying to server: $SERVER"
 print_info "Remote path: $REMOTE_PATH"
 
 # Load environment variables
-if [ -f env_file ]; then
-    source env_file
-    print_info "Loaded environment variables from env_file"
+if [ -f .env ]; then
+    source .env
+    print_info "Loaded environment variables from .env"
 else
-    print_error "env_file not found!"
+    print_error ".env not found!"
     exit 1
 fi
 
@@ -66,7 +66,7 @@ scp images/*.tar.gz "$SERVER:$REMOTE_PATH/images/"
 
 # Transfer configuration files
 print_info "Transferring configuration files..."
-scp env_file "$SERVER:$REMOTE_PATH/"
+scp .env "$SERVER:$REMOTE_PATH/"
 scp docker-compose.prod.yml "$SERVER:$REMOTE_PATH/docker-compose.yml"
 scp -r nginx/ "$SERVER:$REMOTE_PATH/"
 scp -r scripts/ "$SERVER:$REMOTE_PATH/"
@@ -82,11 +82,11 @@ ssh "$SERVER" "cd $REMOTE_PATH && docker load < images/nginx.tar.gz"
 
 # Stop existing containers if running
 print_info "Stopping existing containers..."
-ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file env_file down || true"
+ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file .env down || true"
 
 # Start services
 print_info "Starting services..."
-ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file env_file up -d"
+ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file .env up -d"
 
 # Wait for services to start
 print_info "Waiting for services to start..."
@@ -96,7 +96,7 @@ sleep 30
 print_info "Checking service health..."
 
 # Check if containers are running
-ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file env_file ps"
+ssh "$SERVER" "cd $REMOTE_PATH && docker compose --env-file .env ps"
 
 # Check application health
 if ssh "$SERVER" "curl -f -s http://localhost:4000/health > /dev/null 2>&1"; then

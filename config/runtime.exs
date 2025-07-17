@@ -6,8 +6,6 @@ config :core, Core.Repo,
   password: System.get_env("DB_PASSWORD", "postgres"),
   hostname: System.get_env("DB_HOST", "localhost"),
   database: System.get_env("DB_NAME", "telegram_admin_api_#{config_env()}"),
-  stacktrace: config_env() == :dev,
-  show_sensitive_data_on_connection_error: config_env() == :dev,
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 # Configure the main application

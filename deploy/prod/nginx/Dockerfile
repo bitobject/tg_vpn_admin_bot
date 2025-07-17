@@ -1,26 +1,22 @@
-# Multi-arch Nginx image optimized for both ARM64 (M1) and AMD64 (Ubuntu)
+# Use the official Nginx image as a base
 FROM nginx:alpine
 
-# Install additional packages
-RUN apk add --no-cache \
-    curl \
-    bash \
-    ca-certificates
+# Install wget for healthchecks
+# Install necessary packages
+RUN apk add --no-cache wget gettext
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY conf.d/ /etc/nginx/conf.d/
+# Copy the main Nginx configuration file. This is the critical fix.
+COPY ./nginx.conf /etc/nginx/nginx.conf
 
-# Create necessary directories
-RUN mkdir -p /var/log/nginx && \
-    mkdir -p /etc/nginx/ssl
+# Copy the Nginx configuration template and the entrypoint script
+COPY ./conf.d/default.conf.template /etc/nginx/templates/default.conf.template
+COPY ./entrypoint.sh /docker-entrypoint.sh
 
-# Expose ports
-EXPOSE 80 443
+# Make the entrypoint script executable
+RUN chmod +x /docker-entrypoint.sh
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+# Set the entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# The default command to run when the container starts
+CMD ["nginx", "-g", "daemon off;"]

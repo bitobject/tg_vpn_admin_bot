@@ -29,18 +29,18 @@ print_error() {
 }
 
 # Load environment variables
-if [ -f env_file ]; then
-    source env_file
-    print_info "Loaded environment variables from env_file"
+if [ -f .env ]; then
+    source .env
+    print_info "Loaded environment variables from .env"
 else
-    print_error "env_file not found!"
+    print_error ".env not found!"
     exit 1
 fi
 
 DOMAIN=${1:-$HOST}
 
 if [ -z "$DOMAIN" ]; then
-    print_error "Domain not specified and HOST not set in env_file"
+    print_error "Domain not specified and HOST not set in .env"
     exit 1
 fi
 
