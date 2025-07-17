@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:15-alpine
     env_file:
-      - ./env
+      - .env
     container_name: ${DB_HOST}
     restart: unless-stopped
     environment:
@@ -26,7 +26,7 @@ services:
   app:
     image: telegram-admin-api:latest
     env_file:
-      - ./env
+      - .env
     container_name: APP_CONTAINER_NAME
     restart: unless-stopped
 
