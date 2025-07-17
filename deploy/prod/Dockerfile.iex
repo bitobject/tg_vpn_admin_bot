@@ -43,37 +43,7 @@ RUN MIX_ENV=prod mix deps.compile
 COPY . .
 
 # Compile the project
-RUN MIX_ENV=prod mix compile
-
-# Build assets if needed (optional, comment out if not using assets)
-# RUN cd apps/admin_api/assets && npm install && npm run deploy
-# RUN MIX_ENV=prod mix phx.digest
-
-# Final image
-FROM hexpm/elixir:1.18.2-erlang-27.2-debian-bookworm-20250113-slim
-
-ENV LANG=C.UTF-8 \
-    LANGUAGE=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    MIX_ENV=prod
-
-WORKDIR /app
-
-# Install runtime deps
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      postgresql-client \
-      curl \
-      inotify-tools && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Hex and Rebar in runtime image
-RUN mix local.hex --force && mix local.rebar --force
-
-# Copy built app, deps, and _build
-COPY --from=build /app/_build /app/_build
-COPY --from=build /app/deps /app/deps
-COPY --from=build /app ./
+# RUN MIX_ENV=prod mix compile
 
 # Expose the port your Phoenix app runs on (default 4000)
 EXPOSE 4000

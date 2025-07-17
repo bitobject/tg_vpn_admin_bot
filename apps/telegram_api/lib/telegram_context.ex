@@ -3,7 +3,7 @@ defmodule TelegramContext do
   import Ecto.Query, warn: false
   alias TelegramUser
   alias TelegramUpdateLog
-  alias TelegramApi.Repo
+  alias Core.Repo
 
   # TelegramUser
   def get_user(id), do: Repo.get(TelegramUser, id)
