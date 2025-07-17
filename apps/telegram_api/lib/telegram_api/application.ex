@@ -12,7 +12,6 @@ defmodule TelegramApi.Application do
         []
       else
         [
-          Core.Repo,
           {Plug.Cowboy,
            scheme: :http,
            plug: TelegramApi.WebhookPlug,
