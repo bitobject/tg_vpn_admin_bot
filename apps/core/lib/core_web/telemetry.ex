@@ -23,10 +23,5 @@ defmodule CoreWeb.Telemetry do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  defp periodic_measurements do
-    [
-      # A module, function and arguments to be invoked periodically.
-      # {Core, :count_users, []}
-    ]
-  end
+
 end

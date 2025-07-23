@@ -62,4 +62,5 @@ config :telegex,
   hook_adapter: Bandit,
   handler: TelegramApi.HookHandler,
   token: System.get_env("TELEGRAM_BOT_TOKEN"),
-  webhook_url: System.get_env("WEBHOOK_URL")
+  webhook_url: System.get_env("WEBHOOK_URL"),
+  caller_adapter: Finch

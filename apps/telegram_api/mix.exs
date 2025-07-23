@@ -19,14 +19,14 @@ defmodule TelegramApi.MixProject do
   def application do
     [
       mod: {TelegramApi.Application, []},
-      extra_applications: [:logger]
+      extra_applications: [:logger, :finch, :jason]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:core, in_umbrella: true},
+      {:core, in_umbrella: true, runtime: false},
       {:telegex, "~>1.8.0"}
     ]
   end
