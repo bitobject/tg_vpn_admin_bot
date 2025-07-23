@@ -12,8 +12,7 @@ defmodule TelegramApi.Application do
         []
       else
         [
-          # Start the Telegex supervisor
-          Telegex,
+
           # Start our Bot Handler, which will in turn start the webserver
           TelegramApi.HookHandler
         ]

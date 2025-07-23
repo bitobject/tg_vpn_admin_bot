@@ -29,7 +29,10 @@ defmodule TelegramApi.MixProject do
       {:core, in_umbrella: true, runtime: false},
       {:telegex, "~>1.8.0"},
       {:finch, "~> 0.18"},
-      {:multipart, "~> 0.4"}
+      {:multipart, "~> 0.4"},
+      {:bandit, "~> 1.5"},
+      {:plug, "~> 1.15"},
+      {:remote_ip, "~> 0.3.0"}
     ]
   end
 end
