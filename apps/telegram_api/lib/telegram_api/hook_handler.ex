@@ -30,12 +30,14 @@ defmodule TelegramApi.HookHandler do
     TelegramContext.log_update(%{user_id: user_id, update: update})
 
     # Manually handle commands and other messages
-    case Map.get(update, "message") do
-      %{"text" => "/start" <> _, "from" => from, "chat" => chat} ->
+    # Manually handle commands and other messages
+    case update do
+      %{"message" => %{"text" => "/start" <> _, "from" => from, "chat" => chat}} ->
         handle_start(from, chat)
 
       _ ->
         # Ignore other messages for now
+        Logger.info("Received unknown update: #{inspect(update)}")
         :ok
     end
   end
