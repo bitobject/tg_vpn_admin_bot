@@ -1,4 +1,11 @@
-upstream tg_bot {
+# Upstream for the Admin Panel API
+upstream admin_api {
     server 127.0.0.1:4000;
+    keepalive 32;
+}
+
+# Upstream for the Telegram Bot Webhook
+upstream telegram_webhook {
+    server 127.0.0.1:4002;
     keepalive 32;
 }

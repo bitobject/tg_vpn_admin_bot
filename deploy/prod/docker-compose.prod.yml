@@ -29,7 +29,9 @@ services:
       - .env
     container_name: APP_CONTAINER_NAME
     restart: unless-stopped
-
+    ports:
+      - "${APP_PORT_HTTP}:${APP_PORT_HTTP}"
+      - "${TELEGRAM_PORT_WEBHOOK}:${TELEGRAM_PORT_WEBHOOK}"
     depends_on:
       postgres:
         condition: service_healthy

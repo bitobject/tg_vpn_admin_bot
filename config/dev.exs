@@ -53,6 +53,16 @@ config :admin_api, :code_reloader,
     "../../test"
   ]
 
+# Configure ports for development
+# Use System.get_env for consistency, with defaults for convenience.
+app_port_http = System.get_env("APP_PORT_HTTP", "4000") |> String.to_integer()
+telegram_port_webhook = System.get_env("TELEGRAM_PORT_WEBHOOK", "4002") |> String.to_integer()
+
+config :admin_api, AdminApiWeb.Endpoint, http: [ip: {127, 0, 0, 1}, port: app_port_http]
+
+config :telegex,
+  telegram_port_webhook: telegram_port_webhook
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 

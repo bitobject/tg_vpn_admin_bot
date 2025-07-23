@@ -19,7 +19,8 @@ defmodule TelegramApi.HookHandler do
     end
 
     # Return the config. We can use the port from our app config.
-    %Telegex.Hook.Config{server_port: 4002}
+    server_port = Application.get_env(:telegex, :telegram_port_webhook)
+    %Telegex.Hook.Config{server_port: server_port}
   end
 
   @impl true

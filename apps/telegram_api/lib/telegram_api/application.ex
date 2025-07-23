@@ -12,7 +12,6 @@ defmodule TelegramApi.Application do
         []
       else
         [
-
           # Start our Bot Handler, which will in turn start the webserver
           TelegramApi.HookHandler
         ]

@@ -58,7 +58,16 @@ config :telemetry_poller,
   ],
   period: 10_000
 
+# Configure Admin API Endpoint port
+app_port_http = System.get_env("APP_PORT_HTTP", "4000") |> String.to_integer()
+
+config :admin_api, AdminApiWeb.Endpoint, http: [ip: {0, 0, 0, 0}, port: app_port_http]
+
+# Configure Telegex webhook port
+telegram_port_webhook = System.get_env("TELEGRAM_PORT_WEBHOOK", "4002") |> String.to_integer()
+
 config :telegex,
+  telegram_port_webhook: telegram_port_webhook,
   hook_adapter: Bandit,
   handler: TelegramApi.HookHandler,
   token: System.get_env("TELEGRAM_BOT_TOKEN"),
