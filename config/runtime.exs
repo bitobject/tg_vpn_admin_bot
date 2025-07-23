@@ -32,7 +32,7 @@ config :admin_api, AdminApiWeb.Endpoint,
   ],
   pubsub_server: AdminApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"],
-  port: String.to_integer(System.get_env("PORT") || "4000"),
+  port: String.to_integer(System.get_env("APP_PORT_HTTP") || "4000"),
   secret_key_base:
     System.get_env("SECRET_KEY_BASE") || "your-secret-key-base-here-change-in-production"
 

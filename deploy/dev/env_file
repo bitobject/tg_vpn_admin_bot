@@ -9,7 +9,8 @@ HOST=localhost
 SECRET_KEY_BASE=devsecretkeybase
 GUARDIAN_SECRET_KEY=devguardiansecret
 POOL_SIZE=10
-PORT=4000
+APP_PORT_HTTP=4000
+TELEGRAM_PORT_WEBHOOK=4002
 
 # Telegram Bot Token
 TELEGRAM_BOT_TOKEN=dev-bot-token
