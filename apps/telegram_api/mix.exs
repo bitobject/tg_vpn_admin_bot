@@ -27,7 +27,9 @@ defmodule TelegramApi.MixProject do
   defp deps do
     [
       {:core, in_umbrella: true, runtime: false},
-      {:telegex, "~>1.8.0"}
+      {:telegex, "~>1.8.0"},
+      {:finch, "~> 0.18"},
+      {:multipart, "~> 0.4"}
     ]
   end
 end
