@@ -32,7 +32,7 @@ defmodule TelegramApi.MixProject do
       {:multipart, "~> 0.4"},
       {:bandit, "~> 1.5"},
       {:plug, "~> 1.15"},
-      {:remote_ip, "~> 0.3.0"}
+      {:remote_ip, "~> 1.2.0"}
     ]
   end
 end
