@@ -57,3 +57,9 @@ config :telemetry_poller,
     {TelemetryPoller, :measure, []}
   ],
   period: 10_000
+
+config :telegex,
+  hook_adapter: Bandit,
+  handler: TelegramApi.HookHandler,
+  token: System.get_env("TELEGRAM_BOT_TOKEN"),
+  webhook_url: System.get_env("WEBHOOK_URL")

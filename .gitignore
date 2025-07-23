@@ -25,4 +25,6 @@ postgres_data/
 Thumbs.db 
 deps
 .elixir_ls
-_build
+_build/*
+_build/dev
+_*

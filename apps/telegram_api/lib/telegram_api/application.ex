@@ -12,26 +12,14 @@ defmodule TelegramApi.Application do
         []
       else
         [
-          {Plug.Cowboy,
-           scheme: :http,
-           plug: TelegramApi.WebhookPlug,
-           options: [port: 4002, dispatch: dispatch()]}
+          # Start the Telegex supervisor
+          Telegex,
+          # Start our Bot Handler, which will in turn start the webserver
+          TelegramApi.HookHandler
         ]
       end
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: TelegramApi.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp dispatch do
-    [
-      {:_,
-       [
-         {"/webhook", TelegramApi.WebhookPlug, []},
-         {:_, Plug.Cowboy.Handler, {TelegramApi.WebhookPlug, []}}
-       ]}
-    ]
   end
 end

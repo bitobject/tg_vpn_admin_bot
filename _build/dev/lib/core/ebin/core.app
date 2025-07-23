@@ -1,6 +1,7 @@
 {application,core,
              [{modules,['Elixir.Core','Elixir.Core.Application',
-                        'Elixir.Core.Repo','Elixir.CoreWeb.Telemetry']},
+                        'Elixir.Core.Release','Elixir.Core.Repo',
+                        'Elixir.CoreWeb.Telemetry']},
               {optional_applications,[]},
               {applications,[kernel,stdlib,elixir,logger,runtime_tools,
                              ecto_sql,postgrex,bcrypt_elixir,guardian,

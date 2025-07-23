@@ -15,7 +15,7 @@ RUN apt-get update && \
       curl \
       nodejs \
       npm \
-      nvim \
+      vim \
       inotify-tools \
       postgresql-client && \
     rm -rf /var/lib/apt/lists/*
