@@ -7,24 +7,29 @@ defmodule TelegramApi.HookHandler do
 
   @impl true
   def on_boot do
+    {:ok, user} = Telegex.Instance.cache_me()
     Logger.info("Booting Telegram Bot Handler...")
 
     webhook_url = System.get_env("WEBHOOK_URL")
+    secret_token = System.get_env("TELEGRAM_BOT_TOKEN")
 
     with {:ok, true} <- Telegex.delete_webhook(),
-         {:ok, true} <- Telegex.set_webhook(webhook_url) do
-      Logger.info("Successfully set webhook to #{webhook_url}")
+         {:ok, true} <- Telegex.set_webhook(webhook_url, secret_token: secret_token) do
+      Logger.info("Successfully set webhook to #{webhook_url} with token #{secret_token}")
     else
       error -> Logger.error("Failed to set webhook: #{inspect(error)}")
     end
 
+    Logger.info("Bot (@#{user.username}) is working (webhook)")
+
     # Return the config. We can use the port from our app config.
     server_port = Application.get_env(:telegex, :telegram_port_webhook)
-    %Telegex.Hook.Config{server_port: server_port}
+    %Telegex.Hook.Config{server_port: server_port, secret_token: secret_token}
   end
 
   @impl true
   def on_update(update) do
+    IO.inspect(inspect(update), label: "Update")
     # Log every update
     user_id = get_user_id(update)
     TelegramContext.log_update(%{user_id: user_id, update: update})

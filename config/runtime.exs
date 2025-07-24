@@ -47,7 +47,8 @@ config :telegram_api,
 # Configure logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  metadata: [:request_id],
+  level: :debug
 
 # Configure telemetry poller
 config :telemetry_poller,
