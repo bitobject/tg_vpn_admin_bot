@@ -22,6 +22,8 @@ defmodule TelegramApi.HookHandler do
       error -> Logger.error("Failed to set webhook: #{inspect(error)}")
     end
 
+    Logger.info("DEBUG: Using secret token for webhook: '#{secret_token}'")
+
     # This config struct is crucial. It tells Telegex to start its own web server.
     config = %Telegex.Hook.Config{
       server_port: server_port,
