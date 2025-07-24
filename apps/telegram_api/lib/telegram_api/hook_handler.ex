@@ -43,15 +43,16 @@ defmodule TelegramApi.HookHandler do
     TelegramContext.log_update(%{user_id: user_id, update: update})
 
     # Manually handle commands and other messages
-    case update do
-      %{"message" => %{"text" => "/start" <> _, "from" => from, "chat" => chat}} ->
-        handle_start(from, chat)
+    # case update do
+    #   %{"message" => %{"text" => "/start" <> _, "from" => from, "chat" => chat}} ->
+    #     handle_start(from, chat)
 
-      _ ->
-        # Ignore other messages for now
-        Logger.info("Received unknown update: #{inspect(update)}")
-        :ok
-    end
+    #   _ ->
+    #     # Ignore other messages for now
+    #     Logger.info("Received unknown update: #{inspect(update)}")
+    #     :ok
+    # end
+    TelegramApi.ChainHandler.call(update, %TelegramApi.ChainContext{bot: Telegex.Instance.bot()})
   end
 
   defp handle_start(from_map, chat_map) do
