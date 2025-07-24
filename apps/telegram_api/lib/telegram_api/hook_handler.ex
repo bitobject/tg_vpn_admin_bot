@@ -1,5 +1,5 @@
 defmodule TelegramApi.HookHandler do
-  use Telegex.Hook.GenHandler
+  use Telegex.GenAngler
 
   require Logger
 
@@ -7,21 +7,30 @@ defmodule TelegramApi.HookHandler do
 
   @impl true
   def on_boot do
-    Logger.info("Booting Telegram Bot Handler...")
+    {:ok, user} = Telegex.Instance.fetch_me()
+    Logger.info("Bot @#{user.username} starting in webhook mode...")
 
     webhook_url = System.get_env("WEBHOOK_URL")
-    # Temporarily disabling secret token for debugging
+    secret_token = System.get_env("TELEGRAM_WEBHOOK_SECRET_TOKEN")
+    server_port = Application.get_env(:telegex, :telegram_port_webhook)
+
+    # Delete any old webhook and set the new one
     with {:ok, true} <- Telegex.delete_webhook(),
-         {:ok, true} <- Telegex.set_webhook(webhook_url) do
-      Logger.info("Successfully set webhook to #{webhook_url} (no secret token)")
+         {:ok, true} <- Telegex.set_webhook(webhook_url, secret_token: secret_token) do
+      Logger.info("Successfully set webhook to #{webhook_url}")
     else
       error -> Logger.error("Failed to set webhook: #{inspect(error)}")
     end
 
-    # Return the config. We can use the port from our app config.
-    server_port = Application.get_env(:telegex, :telegram_port_webhook)
-    # Return the config without a secret token
-    %Telegex.Hook.Config{server_port: server_port}
+    # This config struct is crucial. It tells Telegex to start its own web server.
+    config = %Telegex.Hook.Config{
+      server_port: server_port,
+      secret_token: secret_token
+    }
+
+    Logger.info("Telegex webhook server starting on port #{server_port}")
+
+    config
   end
 
   @impl true
@@ -31,7 +40,6 @@ defmodule TelegramApi.HookHandler do
     user_id = get_user_id(update)
     TelegramContext.log_update(%{user_id: user_id, update: update})
 
-    # Manually handle commands and other messages
     # Manually handle commands and other messages
     case update do
       %{"message" => %{"text" => "/start" <> _, "from" => from, "chat" => chat}} ->
