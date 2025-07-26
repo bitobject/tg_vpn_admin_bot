@@ -18,7 +18,7 @@ defmodule AdminApi.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :runtime_tools],
+      extra_applications: [:logger, :runtime_tools, :core, :telegram_api],
       mod: {AdminApi.Application, []}
     ]
   end
