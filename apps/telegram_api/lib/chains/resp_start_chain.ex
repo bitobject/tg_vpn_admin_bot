@@ -17,8 +17,7 @@ defmodule TelegramApi.RespStartChain do
   def match?(_message, _context), do: false
 
   @impl true
-  def handle(%{from: from, chat: chat, text: _text} = _message, context)
-      when is_nil(from.username) or from.username == "" do
+  def handle(%{from: from, chat: chat, text: _text} = _message, context)  when is_nil(from.username) or from.username == "" do
     Logger.error(" i am in 1")
     handle_missing_username(chat.id, context)
   end
@@ -26,56 +25,68 @@ defmodule TelegramApi.RespStartChain do
   def handle(%{from: from, chat: chat, text: _text} = _message, context) do
     Logger.error("User #{from.username} started the bot")
 
-    Logger.error(" i am in 2")
-    attrs = telegram_user_attrs(from)
-    # context =
-    resp =
+      Logger.error(" i am in 2")
+      attrs = telegram_user_attrs(from)
+      # context =
       case TelegramContext.create_or_update_user(attrs) do
-        {:ok, user} ->
-          {:ok, user}
+        {:ok, _user} ->
+          Logger.error("#{from.username} started the bot")
+          Logger.error(" i am in 3")
+
+          markup = %InlineKeyboardMarkup{
+            inline_keyboard: [
+              [
+                %InlineKeyboardButton{
+                  text: "Hello",
+                  callback_data: "hello:v1"
+                }
+              ]
+            ]
+          }
+
+          send_hello = %{
+            method: "sendMessage",
+            chat_id: chat.id,
+            text: "*Hello* #{from.first_name || from.username}",
+            reply_markup: markup,
+            parse_mode: "MarkdownV2",
+            disable_web_page_preview: true
+          }
+
+          %{context | payload: send_hello}
 
         {:error, changeset} ->
-          {:error, "Что-то пошло не так напишите /support"}
+          Logger.error(" i am in 6")
+          Logger.error("Error saving user on /start: #{inspect(changeset)}")
+          %{context | payload: "Что-то пошло не так напишите \/support"}
       end
 
-    case resp do
-      {:ok, user} ->
-        markup = %InlineKeyboardMarkup{
-          inline_keyboard: [
-            [
-              %InlineKeyboardButton{
-                text: "Hello",
-                callback_data: "hello:v1"
-              }
-            ]
-          ]
-        }
+    # Logger.error(" i am in 7")
 
-        send_hello = %{
-          method: "sendMessage",
-          chat_id: chat.id,
-          text: "*Hello* #{from.first_name || from.username}",
-          reply_markup: markup,
-          parse_mode: "MarkdownV2",
-          disable_web_page_preview: true
-        }
+    # markup = %InlineKeyboardMarkup{
+    #   inline_keyboard: [
+    #     [
+    #       %InlineKeyboardButton{
+    #         text: "Hello",
+    #         callback_data: "hello:v1"
+    #       }
+    #     ]
+    #   ]
+    # }
 
-        context = %{context | payload: send_hello}
+    # send_hello = %{
+    #   method: "sendMessage",
+    #   chat_id: chat.id,
+    #   text:
+    #     "*Hello* #{from.first_name || from.username}",
+    #   reply_markup: markup,
+    #   parse_mode: "MarkdownV2",
+    #   disable_web_page_preview: true
+    # }
 
-        {:done, context}
+    # context = %{context | payload: send_hello}
 
-      {:error, mes} ->
-        send_hello = %{
-          method: "sendMessage",
-          chat_id: chat.id,
-          text: mes,
-          parse_mode: "MarkdownV2",
-          disable_web_page_preview: true
-        }
-
-        context = %{context | payload: send_hello}
-        {:done, context}
-    end
+    {:done, context}
   end
 
   defp handle_missing_username(chat_id, context) do
