@@ -7,17 +7,17 @@ defmodule TelegramUser do
   @foreign_key_type :string
   schema "telegram_users" do
     # Original Telegram user ID, kept for reference
-    field :id, :integer
-    field :is_bot, :boolean
-    field :first_name, :string
-    field :last_name, :string
-    field :language_code, :string
-    field :is_premium, :boolean
-    field :added_to_attachment_menu, :boolean
-    field :can_join_groups, :boolean
-    field :can_read_all_group_messages, :boolean
-    field :supports_inline_queries, :boolean
-    field :can_connect_to_business, :boolean
+    field(:id, :integer)
+    field(:is_bot, :boolean)
+    field(:first_name, :string)
+    field(:last_name, :string)
+    field(:language_code, :string)
+    field(:is_premium, :boolean)
+    field(:added_to_attachment_menu, :boolean)
+    field(:can_join_groups, :boolean)
+    field(:can_read_all_group_messages, :boolean)
+    field(:supports_inline_queries, :boolean)
+    field(:can_connect_to_business, :boolean)
 
     timestamps()
   end

@@ -18,8 +18,8 @@ defmodule TelegramApi.RespStartChain do
 
   @impl true
   def handle(%{from: from, chat: chat} = _message, context) do
-    # The `from` object is a Telegex.Type.User struct.
-    # We must have a username to use it as a primary key.
+    Logger.error("User #{from.username} started the bot")
+
     if is_nil(from.username) or from.username == "" do
       handle_missing_username(chat.id, context)
     else
@@ -27,11 +27,13 @@ defmodule TelegramApi.RespStartChain do
 
       case TelegramContext.create_or_update_user(attrs) do
         {:ok, user} ->
+          Logger.error("User #{user.username} started the bot")
+
           markup = %InlineKeyboardMarkup{
             inline_keyboard: [
               [
                 %InlineKeyboardButton{
-                  text: "Hello",
+                  text: "Hello #{user.first_name || user.username}",
                   callback_data: "hello:v1"
                 }
               ]
@@ -39,7 +41,7 @@ defmodule TelegramApi.RespStartChain do
           }
 
           text = """
-          *Hi, #{user.first_name}!*\n
+          *Hi, #{user.first_name || user.username}!*\n
           Welcome to our bot\.
           😇 You can learn more from here: [telegex/telegex](https://github.com/telegex/telegex)\
           """
@@ -73,10 +75,10 @@ defmodule TelegramApi.RespStartChain do
 
     To use this bot, you need to set a public *username* in your Telegram settings\.
     Please go to `Settings -> Edit profile -> Username` and set one up\.
-    
+
     Then come back and type /start again\.
     """
-    
+
     payload = %{
       method: "sendMessage",
       chat_id: chat_id,
