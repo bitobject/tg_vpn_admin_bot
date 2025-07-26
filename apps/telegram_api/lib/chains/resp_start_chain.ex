@@ -27,7 +27,7 @@ defmodule TelegramApi.RespStartChain do
 
       Logger.error(" i am in 2")
       attrs = telegram_user_attrs(from)
-
+      context =
       case TelegramContext.create_or_update_user(attrs) do
         {:ok, _user} ->
           Logger.error("#{from.username} started the bot")
@@ -53,14 +53,14 @@ defmodule TelegramApi.RespStartChain do
             parse_mode: "MarkdownV2",
             disable_web_page_preview: true
           }
+
           Logger.error(" i am in 5")
-          context = %{context | payload: send_hello}
-          {:done, context}
+          %{context | payload: send_hello}
 
         {:error, changeset} ->
           Logger.error(" i am in 6")
           Logger.error("Error saving user on /start: #{inspect(changeset)}")
-          {:done, %{context | payload: "Что-то пошло не так напишите /support"}}
+          %{context | payload: "Что-то пошло не так напишите /support"}
       end
 
     # Logger.error(" i am in 7")
@@ -88,7 +88,7 @@ defmodule TelegramApi.RespStartChain do
 
     # context = %{context | payload: send_hello}
 
-    # {:done, context}
+    {:done, context}
   end
 
   defp handle_missing_username(chat_id, context) do
