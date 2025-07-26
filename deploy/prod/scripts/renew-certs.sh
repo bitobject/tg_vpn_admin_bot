@@ -8,15 +8,15 @@ set -e
 echo "Starting certificate renewal process..."
 
 # Renew certificates
-docker-compose run --rm certbot renew
+sudo certbot renew
 
 # Check if certificates were renewed
-if docker-compose run --rm certbot certificates | grep -q "VALID"; then
+if sudo certbot certificates | grep -q "VALID"; then
     echo "Certificates renewed successfully!"
     
     # Reload nginx to use new certificates
     echo "Reloading nginx..."
-    docker-compose exec nginx nginx -s reload
+    sudo systemctl reload nginx
     
     echo "Certificate renewal completed successfully!"
 else

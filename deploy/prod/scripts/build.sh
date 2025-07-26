@@ -27,7 +27,6 @@ export DOCKER_BUILDKIT=1
 
 # Имена и теги образов
 APP_IMAGE="telegram-admin-api:latest"
-NGINX_IMAGE="telegram-admin-nginx:latest"
 
 print_info "Building application image for linux/amd64: $APP_IMAGE"
 
@@ -48,14 +47,8 @@ popd
 
 print_success "Application image built successfully"
 
-print_info "Building Nginx image: $NGINX_IMAGE"
 
-docker build -t "$NGINX_IMAGE" -f nginx/Dockerfile nginx/
-
-print_success "Nginx image built successfully"
 
 print_success "Build process completed successfully!"
-print_info "Images ready for deployment:"
+print_info "Image ready for deployment:"
 echo "  - $APP_IMAGE"
-echo "  - $NGINX_IMAGE"
-echo "  - $NGINX_IMAGE"

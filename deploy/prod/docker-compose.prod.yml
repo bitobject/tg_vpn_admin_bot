@@ -24,7 +24,6 @@ services:
 
   # Elixir Application
   app:
-    # image: telegram-admin-api:latest
     build:
       context: ../..
       dockerfile: deploy/prod/Dockerfile

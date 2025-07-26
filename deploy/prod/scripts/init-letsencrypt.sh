@@ -46,7 +46,8 @@ EOF
 
 # Start nginx with temporary configuration
 echo "Starting nginx with temporary configuration..."
-docker-compose up -d nginx
+# Start the native Nginx service
+sudo systemctl start nginx
 
 # Wait for nginx to start
 echo "Waiting for nginx to start..."
@@ -54,7 +55,8 @@ sleep 10
 
 # Generate certificate
 echo "Generating SSL certificate..."
-docker-compose run --rm certbot certonly \
+# Request certificate using the native certbot client
+sudo certbot certonly --webroot \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
@@ -67,7 +69,8 @@ rm nginx/conf.d/temp.conf
 
 # Restart nginx with proper configuration
 echo "Restarting nginx with SSL configuration..."
-docker-compose restart nginx
+# Reload the native Nginx service to apply new certificates
+sudo systemctl reload nginx
 
 echo "SSL certificate generation completed!"
 echo "Your site should now be accessible via HTTPS: https://$DOMAIN" 

@@ -60,7 +60,7 @@ WORKDIR /app
 COPY --from=build --chown=app:app /app/_build/prod/rel/telegram_admin_api /app
 
 # Copy the entrypoint script
-COPY --chown=app:app deploy/prod/entrypoint.sh /app/entrypoint.sh
+COPY --chown=app:app deploy/prod/scripts/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Switch to app user
