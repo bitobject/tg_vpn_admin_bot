@@ -7,6 +7,7 @@ config :admin_api,
   namespace: AdminApi,
   generators: [timestamp_type: :utc_datetime]
 
+config :core, ecto_repos: [Core.Repo]
 # Configure Phoenix to not start its own server. This will be handled by the Bandit adapter.
 config :admin_api, AdminApiWeb.Endpoint, server: false
 
