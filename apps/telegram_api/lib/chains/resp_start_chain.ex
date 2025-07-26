@@ -43,18 +43,16 @@ defmodule TelegramApi.RespStartChain do
               ]
             ]
           }
-          Logger.error(" i am in 4")
 
           send_hello = %{
             method: "sendMessage",
             chat_id: chat.id,
-            text: "Hi, #{from.first_name || from.username}!\nWelcome to our bot.",
+            text: "Hi\, #{from.first_name || from.username}\!\nWelcome to our bot\.",
             reply_markup: markup,
             parse_mode: "MarkdownV2",
             disable_web_page_preview: true
           }
 
-          Logger.error(" i am in 5")
           %{context | payload: send_hello}
 
         {:error, changeset} ->
