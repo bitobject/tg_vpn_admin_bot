@@ -38,7 +38,7 @@ defmodule TelegramApi.HookHandler do
   @impl true
   def on_update(update) do
     user_id = get_user_id(update)
-    TelegramContext.log_update(%{user_id: user_id, update: update})
+    # TelegramContext.log_update(%{user_id: user_id, update: update})
 
     # All updates are now processed through the chain handler.
     TelegramApi.ChainHandler.call(update, %TelegramApi.ChainContext{bot: Telegex.Instance.bot()})
