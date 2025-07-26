@@ -40,43 +40,8 @@ defmodule TelegramApi.HookHandler do
     user_id = get_user_id(update)
     TelegramContext.log_update(%{user_id: user_id, update: update})
 
-    # Manually handle commands and other messages
-    # case update do
-    #   %{"message" => %{"text" => "/start" <> _, "from" => from, "chat" => chat}} ->
-    #     handle_start(from, chat)
-
-    #   _ ->
-    #     # Ignore other messages for now
-    #     Logger.info("Received unknown update: #{inspect(update)}")
-    #     :ok
-    # end
+    # All updates are now processed through the chain handler.
     TelegramApi.ChainHandler.call(update, %TelegramApi.ChainContext{bot: Telegex.Instance.bot()})
-  end
-
-  defp handle_start(from_map, chat_map) do
-    # The `from` and `chat` are plain maps here, not structs
-    attrs = telegram_user_attrs(from_map)
-    TelegramContext.create_or_update_user(attrs)
-
-    greeting = greeting_text(from_map)
-    Telegex.send_message(chat_map["id"], greeting)
-  end
-
-  defp telegram_user_attrs(from) do
-    %{
-      id: from["id"],
-      first_name: from["first_name"],
-      last_name: from["last_name"],
-      username: from["username"],
-      language_code: from["language_code"]
-    }
-  end
-
-  defp greeting_text(from) do
-    """
-    Hi, #{from["first_name"]}!
-    Welcome to our bot.
-    """
   end
 
   defp get_user_id(%{"message" => %{"from" => %{"id" => id}}}), do: id
