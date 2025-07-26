@@ -58,6 +58,31 @@ defmodule TelegramApi.RespStartChain do
           {:done, %{context | payload: "Что-то пошло не так напишите /support"}}
       end
     end
+
+    markup = %InlineKeyboardMarkup{
+      inline_keyboard: [
+        [
+          %InlineKeyboardButton{
+            text: "Hello",
+            callback_data: "hello:v1"
+          }
+        ]
+      ]
+    }
+
+    send_hello = %{
+      method: "sendMessage",
+      chat_id: chat.id,
+      text:
+        "*Hello*\n\n😇 You can learn more from here: [telegex/telegex](https://github.com/telegex/telegex)\\.",
+      reply_markup: markup,
+      parse_mode: "MarkdownV2",
+      disable_web_page_preview: true
+    }
+
+    context = %{context | payload: send_hello}
+
+    {:done, context}
   end
 
   defp handle_missing_username(chat_id, context) do
