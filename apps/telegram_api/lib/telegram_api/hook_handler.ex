@@ -10,8 +10,8 @@ defmodule TelegramApi.HookHandler do
     {:ok, user} = Telegex.Instance.fetch_me()
     Logger.info("Bot @#{user.username} starting in webhook mode...")
 
-    webhook_url = System.get_env("WEBHOOK_URL")
-    secret_token = System.get_env("TELEGRAM_WEBHOOK_SECRET_TOKEN")
+    webhook_url = Application.get_env(:telegex, :webhook_url)
+    secret_token = Application.get_env(:telegex, :secret_token)
     server_port = Application.get_env(:telegex, :telegram_port_webhook)
 
     # Delete any old webhook and set the new one
@@ -37,8 +37,6 @@ defmodule TelegramApi.HookHandler do
 
   @impl true
   def on_update(update) do
-    IO.inspect(inspect(update), label: "Update")
-    # Log every update
     user_id = get_user_id(update)
     TelegramContext.log_update(%{user_id: user_id, update: update})
 

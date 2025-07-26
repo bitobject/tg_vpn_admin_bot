@@ -8,6 +8,10 @@ config :admin_api,
   ecto_repos: [Core.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+# Configure Phoenix to not start its own server. This will be handled by the Bandit adapter.
+config :admin_api, AdminApiWeb.Endpoint,
+  server: false
+
 # esbuild configuration removed for API-only application
 
 # Import environment specific config. This must remain at the bottom
