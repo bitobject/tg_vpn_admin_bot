@@ -27,64 +27,64 @@ defmodule TelegramApi.RespStartChain do
 
       Logger.error(" i am in 2")
       attrs = telegram_user_attrs(from)
-      context =
-      case TelegramContext.create_or_update_user(attrs) do
-        {:ok, _user} ->
-          Logger.error("#{from.username} started the bot")
-          Logger.error(" i am in 3")
+      # context =
+      # case TelegramContext.create_or_update_user(attrs) do
+      #   {:ok, _user} ->
+      #     Logger.error("#{from.username} started the bot")
+      #     Logger.error(" i am in 3")
 
-          markup = %InlineKeyboardMarkup{
-            inline_keyboard: [
-              [
-                %InlineKeyboardButton{
-                  text: "Hello",
-                  callback_data: "hello:v1"
-                }
-              ]
-            ]
+      #     markup = %InlineKeyboardMarkup{
+      #       inline_keyboard: [
+      #         [
+      #           %InlineKeyboardButton{
+      #             text: "Hello",
+      #             callback_data: "hello:v1"
+      #           }
+      #         ]
+      #       ]
+      #     }
+
+      #     send_hello = %{
+      #       method: "sendMessage",
+      #       chat_id: chat.id,
+      #       text: "Hi\, #{from.first_name || from.username}\!\nWelcome to our bot\.",
+      #       reply_markup: markup,
+      #       parse_mode: "MarkdownV2",
+      #       disable_web_page_preview: true
+      #     }
+
+      #     %{context | payload: send_hello}
+
+      #   {:error, changeset} ->
+      #     Logger.error(" i am in 6")
+      #     Logger.error("Error saving user on /start: #{inspect(changeset)}")
+      #     %{context | payload: "Что-то пошло не так напишите /support"}
+      # end
+
+    Logger.error(" i am in 7")
+
+    markup = %InlineKeyboardMarkup{
+      inline_keyboard: [
+        [
+          %InlineKeyboardButton{
+            text: "Hello",
+            callback_data: "hello:v1"
           }
+        ]
+      ]
+    }
 
-          send_hello = %{
-            method: "sendMessage",
-            chat_id: chat.id,
-            text: "Hi\, #{from.first_name || from.username}\!\nWelcome to our bot\.",
-            reply_markup: markup,
-            parse_mode: "MarkdownV2",
-            disable_web_page_preview: true
-          }
+    send_hello = %{
+      method: "sendMessage",
+      chat_id: chat.id,
+      text:
+        "*Hello* #{from.first_name || from.username}",
+      reply_markup: markup,
+      parse_mode: "MarkdownV2",
+      disable_web_page_preview: true
+    }
 
-          %{context | payload: send_hello}
-
-        {:error, changeset} ->
-          Logger.error(" i am in 6")
-          Logger.error("Error saving user on /start: #{inspect(changeset)}")
-          %{context | payload: "Что-то пошло не так напишите /support"}
-      end
-
-    # Logger.error(" i am in 7")
-
-    # markup = %InlineKeyboardMarkup{
-    #   inline_keyboard: [
-    #     [
-    #       %InlineKeyboardButton{
-    #         text: "Hello",
-    #         callback_data: "hello:v1"
-    #       }
-    #     ]
-    #   ]
-    # }
-
-    # send_hello = %{
-    #   method: "sendMessage",
-    #   chat_id: chat.id,
-    #   text:
-    #     "*Hello*#{from.first_name || from.username}",
-    #   reply_markup: markup,
-    #   parse_mode: "MarkdownV2",
-    #   disable_web_page_preview: true
-    # }
-
-    # context = %{context | payload: send_hello}
+    context = %{context | payload: send_hello}
 
     {:done, context}
   end
