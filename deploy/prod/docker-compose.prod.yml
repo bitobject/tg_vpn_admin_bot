@@ -24,10 +24,10 @@ services:
 
   # Elixir Application
   app:
-    image: telegram-admin-api:latest
-    # build:
-    #   context: ../..
-    #   dockerfile: deploy/prod/Dockerfile.iex
+    # image: telegram-admin-api:latest
+    build:
+      context: ../..
+      dockerfile: deploy/prod/Dockerfile
     env_file:
       - .env
     container_name: APP_CONTAINER_NAME

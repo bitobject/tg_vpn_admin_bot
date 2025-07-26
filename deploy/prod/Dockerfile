@@ -13,8 +13,6 @@ RUN mix local.hex --force && \
 
 # Set build environment
 ENV MIX_ENV=prod
-ENV SECRET_KEY_BASE=placeholder
-ENV GUARDIAN_SECRET_KEY=placeholder
 
 # Copy dependency files first (for better layer caching)
 COPY mix.exs mix.lock ./
@@ -58,11 +56,12 @@ RUN addgroup --gid 1000 app && \
 WORKDIR /app
 
 # Copy release from builder
-COPY --from=build --chown=app:app /app/_build/prod/rel/telegram_admin_api ./
+# Copy the release from the build stage
+COPY --from=build --chown=app:app /app/_build/prod/rel/telegram_admin_api /app
 
-# Create necessary directories
-RUN mkdir -p /app/logs && \
-    chown -R app:app /app
+# Copy the entrypoint script
+COPY --chown=app:app deploy/prod/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Switch to app user
 USER app
@@ -75,4 +74,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:4000/health || exit 1
 
 # Start the application
-CMD ["bin/telegram_admin_api", "start"] 
+ENTRYPOINT ["/app/entrypoint.sh"]
