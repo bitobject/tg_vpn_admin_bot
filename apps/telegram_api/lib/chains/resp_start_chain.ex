@@ -17,7 +17,7 @@ defmodule TelegramApi.RespStartChain do
   def match?(_message, _context), do: false
 
   @impl true
-  def handle(%{from: from, chat: chat} = _message, context) do
+  def handle(%{from: from, chat: chat, text: _text} = _message, context) do
     Logger.error("User #{from.username} started the bot")
 
     if is_nil(from.username) or from.username == "" do
