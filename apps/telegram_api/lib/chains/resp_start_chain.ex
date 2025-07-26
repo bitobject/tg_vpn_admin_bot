@@ -19,7 +19,7 @@ defmodule TelegramApi.RespStartChain do
   @impl true
   def handle(%{from: from, chat: chat, text: _text} = _message, context) do
     Logger.error("User #{from.username} started the bot")
-
+a =
     if is_nil(from.username) or from.username == "" do
       Logger.error(" i am in 1")
       handle_missing_username(chat.id, context)
@@ -28,15 +28,15 @@ defmodule TelegramApi.RespStartChain do
       attrs = telegram_user_attrs(from)
 
       case TelegramContext.create_or_update_user(attrs) do
-        {:ok, user} ->
-          Logger.error("#{user.username} started the bot")
+        {:ok, _user} ->
+          Logger.error("#{from.username} started the bot")
           Logger.error(" i am in 3")
 
           markup = %InlineKeyboardMarkup{
             inline_keyboard: [
               [
                 %InlineKeyboardButton{
-                  text: "Hello #{user.first_name || user.username}",
+                  text: "Hello #{from.first_name || from.username}",
                   callback_data: "hello:v1"
                 }
               ]
@@ -47,7 +47,7 @@ defmodule TelegramApi.RespStartChain do
           send_hello = %{
             method: "sendMessage",
             chat_id: chat.id,
-            text: "Hi, #{user.first_name || user.username}!\nWelcome to our bot.",
+            text: "Hi, #{from.first_name || from.username}!\nWelcome to our bot.",
             reply_markup: markup,
             parse_mode: "MarkdownV2",
             disable_web_page_preview: true
@@ -63,6 +63,8 @@ defmodule TelegramApi.RespStartChain do
       end
     end
 
+    IO.inspect(a, label: "resp_start_chain")
+a
     # Logger.error(" i am in 7")
 
     # markup = %InlineKeyboardMarkup{
