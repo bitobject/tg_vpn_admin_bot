@@ -51,13 +51,7 @@ defmodule TelegramApi.RespStartChain do
             disable_web_page_preview: true
           }
 
-          new_context =
-            context
-            |> Map.put(:payload, send_hello)
-
-          # |> Map.put(:current_user, user)
-
-          {:done, new_context}
+          {:done, %{context | payload: send_hello}}
 
         {:error, changeset} ->
           Logger.error("Error saving user on /start: #{inspect(changeset)}")
