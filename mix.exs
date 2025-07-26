@@ -28,8 +28,7 @@ defmodule TelegramAdminApi.MixProject do
     [
       {:jason, "~> 1.4"},
       {:httpoison, "~> 2.2"},
-      {:plug, "~> 1.14"},
-      {:plug_cowboy, "~> 2.7"},
+      {:bandit, ">= 1.7.0"},
       {:telegex, "~> 1.8"}
     ]
   end

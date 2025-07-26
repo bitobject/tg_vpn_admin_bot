@@ -50,7 +50,7 @@ config :admin_api, AdminApi.Guardian,
 
 # Configure Phoenix Endpoint
 config :admin_api, AdminApiWeb.Endpoint,
-  url: [host: host, port: 443],
+  url: [host: host, port: app_port_http],
   http: [ip: {0, 0, 0, 0}, port: app_port_http],
   secret_key_base: secret_key_base,
   server: true,

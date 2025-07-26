@@ -9,8 +9,7 @@ config :admin_api,
   generators: [timestamp_type: :utc_datetime]
 
 # Configure Phoenix to not start its own server. This will be handled by the Bandit adapter.
-config :admin_api, AdminApiWeb.Endpoint,
-  server: false
+config :admin_api, AdminApiWeb.Endpoint, server: false
 
 # esbuild configuration removed for API-only application
 
