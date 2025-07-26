@@ -27,7 +27,7 @@ defmodule TelegramApi.RespStartChain do
 
       case TelegramContext.create_or_update_user(attrs) do
         {:ok, user} ->
-          Logger.error("User #{user.username} started the bot")
+          Logger.error("#{user.username} started the bot")
 
           markup = %InlineKeyboardMarkup{
             inline_keyboard: [
@@ -58,7 +58,7 @@ defmodule TelegramApi.RespStartChain do
           new_context =
             context
             |> Map.put(:payload, send_hello)
-            |> Map.put(:current_user, user)
+            # |> Map.put(:current_user, user)
 
           {:done, new_context}
 
