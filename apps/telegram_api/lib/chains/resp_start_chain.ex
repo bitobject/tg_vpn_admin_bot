@@ -40,11 +40,7 @@ defmodule TelegramApi.RespStartChain do
             ]
           }
 
-          text = """
-          *Hi, #{user.first_name || user.username}!*\n
-          Welcome to our bot\.
-          😇 You can learn more from here: [telegex/telegex](https://github.com/telegex/telegex)\
-          """
+          text = "Hi, #{user.first_name || user.username}!\nWelcome to our bot."
 
           send_hello = %{
             method: "sendMessage",
@@ -58,13 +54,14 @@ defmodule TelegramApi.RespStartChain do
           new_context =
             context
             |> Map.put(:payload, send_hello)
-            # |> Map.put(:current_user, user)
+
+          # |> Map.put(:current_user, user)
 
           {:done, new_context}
 
         {:error, changeset} ->
           Logger.error("Error saving user on /start: #{inspect(changeset)}")
-          {:halt, context}
+          {:done, %{context | payload: "Что-то пошло не так напишите /support"}}
       end
     end
   end
