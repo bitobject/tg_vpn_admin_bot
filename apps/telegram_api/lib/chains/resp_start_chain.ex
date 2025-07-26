@@ -17,13 +17,14 @@ defmodule TelegramApi.RespStartChain do
   def match?(_message, _context), do: false
 
   @impl true
+  def handle(%{from: from, chat: chat, text: _text} = _message, context)  when is_nil(from.username) or from.username == "" do
+    Logger.error(" i am in 1")
+    handle_missing_username(chat.id, context)
+  end
+
   def handle(%{from: from, chat: chat, text: _text} = _message, context) do
     Logger.error("User #{from.username} started the bot")
-a =
-    if is_nil(from.username) or from.username == "" do
-      Logger.error(" i am in 1")
-      handle_missing_username(chat.id, context)
-    else
+
       Logger.error(" i am in 2")
       attrs = telegram_user_attrs(from)
 
@@ -61,10 +62,7 @@ a =
           Logger.error("Error saving user on /start: #{inspect(changeset)}")
           {:done, %{context | payload: "Что-то пошло не так напишите /support"}}
       end
-    end
 
-    IO.inspect(a, label: "resp_start_chain")
-a
     # Logger.error(" i am in 7")
 
     # markup = %InlineKeyboardMarkup{
