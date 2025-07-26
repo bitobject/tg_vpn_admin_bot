@@ -37,8 +37,7 @@ COPY apps/admin_api/mix.exs apps/admin_api/
 COPY apps/telegram_api/mix.exs apps/telegram_api/
 
 # Install deps
-RUN mix deps.get --only prod
-RUN MIX_ENV=prod mix deps.compile
+RUN mix deps.get --only prod && MIX_ENV=prod mix deps.compile
 
 # Copy the rest of umbrella
 COPY . .
