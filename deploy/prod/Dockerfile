@@ -75,4 +75,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Start the application
 # Keep the container running for debugging or manual execution
-CMD ["tail", "-f", "/dev/null"]
+CMD ["./entrypoint.sh"]
