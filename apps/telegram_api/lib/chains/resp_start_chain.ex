@@ -63,32 +63,32 @@ defmodule TelegramApi.RespStartChain do
       end
     end
 
-    Logger.error(" i am in 7")
+    # Logger.error(" i am in 7")
 
-    markup = %InlineKeyboardMarkup{
-      inline_keyboard: [
-        [
-          %InlineKeyboardButton{
-            text: "Hello",
-            callback_data: "hello:v1"
-          }
-        ]
-      ]
-    }
+    # markup = %InlineKeyboardMarkup{
+    #   inline_keyboard: [
+    #     [
+    #       %InlineKeyboardButton{
+    #         text: "Hello",
+    #         callback_data: "hello:v1"
+    #       }
+    #     ]
+    #   ]
+    # }
 
-    send_hello = %{
-      method: "sendMessage",
-      chat_id: chat.id,
-      text:
-        "*Hello*#{from.first_name || from.username}",
-      reply_markup: markup,
-      parse_mode: "MarkdownV2",
-      disable_web_page_preview: true
-    }
+    # send_hello = %{
+    #   method: "sendMessage",
+    #   chat_id: chat.id,
+    #   text:
+    #     "*Hello*#{from.first_name || from.username}",
+    #   reply_markup: markup,
+    #   parse_mode: "MarkdownV2",
+    #   disable_web_page_preview: true
+    # }
 
-    context = %{context | payload: send_hello}
+    # context = %{context | payload: send_hello}
 
-    {:done, context}
+    # {:done, context}
   end
 
   defp handle_missing_username(chat_id, context) do
