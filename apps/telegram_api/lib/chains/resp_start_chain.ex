@@ -21,13 +21,16 @@ defmodule TelegramApi.RespStartChain do
     Logger.error("User #{from.username} started the bot")
 
     if is_nil(from.username) or from.username == "" do
+      Logger.error(" i am in 1")
       handle_missing_username(chat.id, context)
     else
+      Logger.error(" i am in 2")
       attrs = telegram_user_attrs(from)
 
       case TelegramContext.create_or_update_user(attrs) do
         {:ok, user} ->
           Logger.error("#{user.username} started the bot")
+          Logger.error(" i am in 3")
 
           markup = %InlineKeyboardMarkup{
             inline_keyboard: [
@@ -39,25 +42,28 @@ defmodule TelegramApi.RespStartChain do
               ]
             ]
           }
-
-          text = "Hi, #{user.first_name || user.username}!\nWelcome to our bot."
+          Logger.error(" i am in 4")
 
           send_hello = %{
             method: "sendMessage",
             chat_id: chat.id,
-            text: text,
+            text: "Hi, #{user.first_name || user.username}!\nWelcome to our bot.",
             reply_markup: markup,
             parse_mode: "MarkdownV2",
             disable_web_page_preview: true
           }
-
-          {:done, %{context | payload: send_hello}}
+          Logger.error(" i am in 5")
+          context = %{context | payload: send_hello}
+          {:done, context}
 
         {:error, changeset} ->
+          Logger.error(" i am in 6")
           Logger.error("Error saving user on /start: #{inspect(changeset)}")
           {:done, %{context | payload: "Что-то пошло не так напишите /support"}}
       end
     end
+
+    Logger.error(" i am in 7")
 
     markup = %InlineKeyboardMarkup{
       inline_keyboard: [
