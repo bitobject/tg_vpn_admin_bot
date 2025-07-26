@@ -5,7 +5,6 @@ import Config
 # Configure the main application
 config :admin_api,
   namespace: AdminApi,
-  ecto_repos: [Core.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure Phoenix to not start its own server. This will be handled by the Bandit adapter.

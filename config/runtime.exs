@@ -27,6 +27,7 @@ signing_salt = System.fetch_env!("SIGNING_SALT")
 # Application Configuration
 # --------------------------------------------------------------------------
 
+config :core, ecto_repos: [Core.Repo]
 # Configure your database
 config :core, Core.Repo,
   username: db_username,
