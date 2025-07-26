@@ -80,7 +80,7 @@ defmodule TelegramApi.RespStartChain do
       method: "sendMessage",
       chat_id: chat.id,
       text:
-        "*Hello*\n\n😇 You can learn more from here: [telegex/telegex](https://github.com/telegex/telegex)\\.",
+        "*Hello*#{user.first_name || user.username}",
       reply_markup: markup,
       parse_mode: "MarkdownV2",
       disable_web_page_preview: true
