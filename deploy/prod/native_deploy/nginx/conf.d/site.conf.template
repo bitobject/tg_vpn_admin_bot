@@ -51,12 +51,12 @@ server {
     }
 
     # Telegram webhook endpoint - proxies to the telegram webhook handler
-    location /updates_hook {
+    location /{{HOOK_PATH}} {
         # Apply the rate limiting zone defined in nginx.conf
         limit_req zone=api burst=10 nodelay;
 
         # Proxy settings
-        rewrite /updates_hook/(.*) /$1 break;
+        rewrite /{{HOOK_PATH}}/(.*) /$1 break;
         proxy_pass http://telegram_webhook;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

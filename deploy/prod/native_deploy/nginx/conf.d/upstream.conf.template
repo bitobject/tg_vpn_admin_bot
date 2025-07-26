@@ -1,11 +1,11 @@
 # Upstream for the Admin Panel API
 upstream admin_api {
-    server 127.0.0.1:4000;
+    server 127.0.0.1:{{APP_PORT_HTTP}};
     keepalive 32;
 }
 
 # Upstream for the Telegram Bot Webhook
 upstream telegram_webhook {
-    server 127.0.0.1:4002;
+    server 127.0.0.1:{{TELEGRAM_PORT_WEBHOOK}};
     keepalive 32;
 }

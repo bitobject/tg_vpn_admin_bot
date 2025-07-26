@@ -8,8 +8,8 @@ DOMAIN_NAME := $(strip $(DOMAIN_NAME))
 endif
 
 # Variables
-UPSTREAM_CONFIG_SRC = ../nginx/conf.d/upstream.conf.template
-SITE_CONFIG_SRC = ../nginx/conf.d/site.conf.template
+UPSTREAM_CONFIG_SRC = ./nginx/conf.d/upstream.conf.template
+SITE_CONFIG_SRC = ./nginx/conf.d/site.conf.template
 TMP_UPSTREAM_CONFIG = ./upstream.conf.tmp
 TMP_SITE_CONFIG = ./site.conf.tmp
 
@@ -87,14 +87,14 @@ deploy-nginx: clean
 	fi
 	# Step 1: Prepare local config files
 	@echo "1. Preparing Nginx config files..."
-	@cat "$(UPSTREAM_CONFIG_SRC)" > "$(TMP_UPSTREAM_CONFIG)"
-	@cat "$(SITE_CONFIG_SRC)" | sed "s/{{DOMAIN_NAME}}/$(DOMAIN_NAME)/g" > "$(TMP_SITE_CONFIG)"
+	@cat "$(UPSTREAM_CONFIG_SRC)" | sed "s/{{APP_PORT_HTTP}}/$(APP_PORT_HTTP)/g" | sed "s/{{TELEGRAM_PORT_WEBHOOK}}/$(TELEGRAM_PORT_WEBHOOK)/g" > "$(TMP_UPSTREAM_CONFIG)"
+	@cat "$(SITE_CONFIG_SRC)" | sed "s/{{DOMAIN_NAME}}/$(DOMAIN_NAME)/g" | sed "s/{{HOOK_PATH}}/$(HOOK_PATH)/g" > "$(TMP_SITE_CONFIG)"
 	# Step 2: Deliver config files to the server
 	@echo "2. Delivering config files to $(SSH_HOST)..."
 	@scp "$(TMP_UPSTREAM_CONFIG)" "$(SSH_USER)@$(SSH_HOST):/tmp/tg_bot_upstream.conf"
 	@scp "$(TMP_SITE_CONFIG)" "$(SSH_USER)@$(SSH_HOST):/tmp/$(DOMAIN_NAME).conf"
 	@echo "  -> Copying main nginx.conf..."
-	@scp "../nginx/nginx.conf" "$(SSH_USER)@$(SSH_HOST):/tmp/nginx.conf"
+	@scp "./nginx/nginx.conf" "$(SSH_USER)@$(SSH_HOST):/tmp/nginx.conf"
 	# Step 3: Execute remote commands
 	@echo "3. Configuring Nginx on $(SSH_HOST)..."
 	@echo "$$DEPLOY_SCRIPT" > deploy_script.sh
