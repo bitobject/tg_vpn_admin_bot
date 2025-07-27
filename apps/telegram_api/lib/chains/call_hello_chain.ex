@@ -1,7 +1,7 @@
 defmodule TelegramApi.CallHelloChain do
   @moduledoc false
 
-  use Telegex.Chain, {:callback_query, prefix: "hello:"}
+  use Telegex.Chain, {:callback_query, prefix: "create_config:"}
 
   @impl true
   def handle(callback_query, context) do
@@ -10,7 +10,7 @@ defmodule TelegramApi.CallHelloChain do
       | payload: %{
           method: "answerCallbackQuery",
           callback_query_id: callback_query.id,
-          text: "Hello 😀",
+          text: "Конфигурация создана",
           show_alert: true
         }
     }

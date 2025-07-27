@@ -24,11 +24,8 @@ defmodule TelegramApi.RespStartChain do
   end
 
   def handle(%{from: from, chat: chat, text: _text} = _message, context) do
-    Logger.error("User #{from.username} started the bot")
-
-    Logger.error(" i am in 2")
     attrs = telegram_user_attrs(from)
-    # context =
+
     case TelegramContext.create_or_update_user(attrs) do
       {:ok, user} ->
         {:done, %{context | payload: create_mesasage(user, chat)}}
@@ -38,8 +35,6 @@ defmodule TelegramApi.RespStartChain do
         Logger.error("Error saving user on /start: #{inspect(changeset)}")
         {:done, %{context | payload: "Что-то пошло не так напишите \/support"}}
     end
-
-    # {:done, %{context | payload: create_mesasage(from, chat)}}
   end
 
   defp create_mesasage(from, chat) do
@@ -47,8 +42,8 @@ defmodule TelegramApi.RespStartChain do
       inline_keyboard: [
         [
           %InlineKeyboardButton{
-            text: "Начать пользоваться ботом",
-            callback_data: "hello:v1"
+            text: "Создать конфигурацию",
+            callback_data: "create_config:v1"
           }
         ]
       ]
