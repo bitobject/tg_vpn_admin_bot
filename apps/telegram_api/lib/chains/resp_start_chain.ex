@@ -47,7 +47,7 @@ defmodule TelegramApi.RespStartChain do
       inline_keyboard: [
         [
           %InlineKeyboardButton{
-            text: "Hello",
+            text: "Начать пользоваться ботом",
             callback_data: "hello:v1"
           }
         ]
@@ -57,7 +57,7 @@ defmodule TelegramApi.RespStartChain do
     %{
       method: "sendMessage",
       chat_id: chat.id,
-      text: "*Hello* #{from.first_name || from.username}",
+      text: "*Привет мой дорогой друг* #{from.first_name || from.username}",
       reply_markup: markup,
       parse_mode: "MarkdownV2",
       disable_web_page_preview: true
