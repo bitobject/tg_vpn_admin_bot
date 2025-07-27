@@ -47,7 +47,8 @@ defmodule TelegramApi.RespStartChain do
           send_hello = %{
             method: "sendMessage",
             chat_id: chat.id,
-            text: "*Hello* #{from.first_name || from.username}",
+            text:
+              "*Hello* #{from.first_name || from.username}",
             reply_markup: markup,
             parse_mode: "MarkdownV2",
             disable_web_page_preview: true
