@@ -1,91 +1,96 @@
-# HTTP server -> HTTPS redirect
+# ====================================================================
+# ФИНАЛЬНАЯ КОНФИГУРАЦИЯ для ${DOMAIN_NAME}
+# Обслуживает: Marzban, API бота и вебхук Telegram
+# ====================================================================
+
+# --- Определение upstream-сервисов ---
+
+# Upstream для панели и API Marzban
+upstream marzban_service {
+	#    server 127.0.0.1:8000;
+	#    server unix:/run/marzban/marzban.socket;
+    server unix:/var/run/marzban.socket;
+}
+
+# Upstream для API вашего Elixir-приложения
+upstream bot_api_service {
+    server 127.0.0.1:4000;
+}
+
+# Upstream для вебхука Telegram вашего Elixir-приложения
+upstream bot_webhook_service {
+    server 127.0.0.1:4002;
+}
+
+
+# --- HTTP server -> HTTPS redirect ---
 server {
     listen 80;
     listen [::]:80;
-    server_name {{DOMAIN_NAME}} www.{{DOMAIN_NAME}};
-    # Redirect all HTTP traffic to HTTPS with the original request URI
-    return 301 https://$host$request_uri;
+    server_name ${DOMAIN_NAME};
+
+    location ~ /.well-known/acme-challenge {
+        allow all;
+        root /var/www/html;
+    }
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
-# HTTPS server
+# --- HTTPS server ---
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
-    server_name {{DOMAIN_NAME}} www.{{DOMAIN_NAME}};
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${DOMAIN_NAME};
 
-    # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/{{DOMAIN_NAME}}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{DOMAIN_NAME}}/privkey.pem;
+    # --- SSL и Настройки Безопасности ---
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Modern SSL Security Settings (from Mozilla SSL Config Generator)
-    ssl_protocols TLSv1.3;
-    ssl_prefer_server_ciphers on;
-    ssl_session_timeout 1d;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_tickets off;
-
-    # HSTS (HTTP Strict Transport Security)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-
-    # Security Headers
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options nosniff;
     add_header Referrer-Policy "strict-origin-when-cross-origin";
 
-    # Custom error page for rate limiting
-    error_page 429 = @ratelimit;
-    location @ratelimit {
-        return 429 'Too many requests\n';
-    }
-
-    # Deny access to hidden files
-    location ~ /\. {
-        deny all;
-    }
-
-    # Health check endpoint - proxies to the admin api
-    location = /health {
-        access_log off;
-        proxy_pass http://admin_api/health;
-    }
-
-    # Telegram webhook endpoint - proxies to the telegram webhook handler
-    location /{{HOOK_PATH}} {
-        # Apply the rate limiting zone defined in nginx.conf
-        limit_req zone=api burst=10 nodelay;
-
-        # Proxy settings
-        rewrite /{{HOOK_PATH}}/(.*) /$1 break;
-        proxy_pass http://telegram_webhook;
+    # === LOCATION ДЛЯ API ВАШЕГО БОТА ===
+    # Проксирует https://${DOMAIN_NAME}/bot-api/* на порт 4000
+    location /bot-api/ {
+        # Убираем /bot-api/ из пути перед отправкой в приложение
+        rewrite /bot-api/(.*) /$1 break;
+        proxy_pass http://bot_api_service;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # All other traffic proxies to the admin api
-    location / {
-        # Apply the rate limiting zone defined in nginx.conf
-        limit_req zone=api burst=10 nodelay;
-
-        # Proxy settings
-        proxy_pass http://admin_api;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # WebSocket support
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_cache_bypass $http_upgrade;
-
-        # Enable proxy buffering
-        proxy_buffering on;
-        
-        proxy_connect_timeout 10s;
-        proxy_read_timeout 60s;
     }
-} 
+
+    # === LOCATION ДЛЯ ВЕБХУКА ТЕЛЕГРАМ-БОТА ===
+    # Проксирует https://${DOMAIN_NAME}/updates_hook/ на порт 4002
+        location /updates_hook {
+        rewrite /updates_hook/(.*) /$1 break;
+                proxy_pass http://bot_webhook_service;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # === LOCATION ДЛЯ MARZBAN (Панель, API, подписки) ===
+    # Этот location обрабатывает ВСЕ ОСТАЛЬНЫЕ запросы
+    location / {
+        proxy_pass http://marzban_service;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

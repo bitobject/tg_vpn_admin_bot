@@ -39,8 +39,7 @@ COPY apps/telegram_api/mix.exs apps/telegram_api/
 # Install deps
 RUN mix deps.get --only prod && MIX_ENV=prod mix deps.compile
 
-# Copy the rest of umbrella
-COPY . .
+# The rest of the umbrella app is mounted via volumes in docker-compose.dev.yml
 
 # Compile the project
 # RUN MIX_ENV=prod mix compile

@@ -63,12 +63,13 @@ echo "- Checking Nginx status...";
 sudo systemctl status nginx --no-pager;
 endef
 
-.PHONY: help deploy-nginx clean update-nginx check-nginx-config check-ssl-certs check-nginx-status check-firewall view-nginx-config reset-firewall
+.PHONY: help local-deploy-nginx deploy-nginx clean update-nginx check-nginx-config check-ssl-certs check-nginx-status check-firewall view-nginx-config reset-firewall
 
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
+	@echo "  local-deploy-nginx Deploys the Nginx configuration to the local machine."
 	@echo "  deploy-nginx       Prepares, delivers, and enables the Nginx config on the remote server."
 	@echo "  update-nginx       Updates Nginx on the remote server to the latest version."
 	@echo "  clean              Remove temporary and leftover files."
@@ -78,6 +79,53 @@ help:
 	@echo "  check-firewall     Check firewall status on the remote server."
 	@echo "  view-nginx-config  View main and site Nginx configs on the remote server."
 	@echo "  reset-firewall     Resets iptables and re-applies UFW rules on the remote server."
+
+local-deploy-nginx: clean
+	@echo "🚀 Starting local Nginx deployment..."
+	@if [ -z "$(DOMAIN_NAME)" ]; then \
+		echo "Error: DOMAIN_NAME is not set. Please set it in deploy/.env"; \
+		exit 1; \
+	fi
+	# Step 1: Prepare local config files
+	@echo "1. Preparing Nginx config files..."
+	@cat "$(UPSTREAM_CONFIG_SRC)" | sed "s/{{APP_PORT_HTTP}}/$(APP_PORT_HTTP)/g" | sed "s/{{TELEGRAM_PORT_WEBHOOK}}/$(TELEGRAM_PORT_WEBHOOK)/g" > "$(TMP_UPSTREAM_CONFIG)"
+	@cat "$(SITE_CONFIG_SRC)" | sed "s/{{DOMAIN_NAME}}/$(DOMAIN_NAME)/g" | sed "s/{{HOOK_PATH}}/$(HOOK_PATH)/g" > "$(TMP_SITE_CONFIG)"
+	# Step 2: Execute local deployment script
+	@echo "2. Configuring local Nginx..."
+	@set -e; \
+	echo "- Ensuring Nginx directories exist..."; \
+	sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/conf.d; \
+	echo "- Preparing main Nginx config..."; \
+	MAIN_NGINX_CONF=/etc/nginx/nginx.conf; \
+	if [ -f "$$MAIN_NGINX_CONF" ]; then \
+	    echo "  -> Backing up existing main Nginx config to $$MAIN_NGINX_CONF.bak"; \
+	    sudo cp "$$MAIN_NGINX_CONF" "$$MAIN_NGINX_CONF.bak"; \
+	fi; \
+	sudo cp "./nginx/nginx.conf" "$$MAIN_NGINX_CONF"; \
+	echo "- Preparing upstream config..."; \
+	UPSTREAM_CONF=/etc/nginx/conf.d/tg_bot.conf; \
+	if [ -f "$$UPSTREAM_CONF" ]; then \
+	    echo "  -> Backing up existing upstream config to $$UPSTREAM_CONF.bak"; \
+	    sudo cp "$$UPSTREAM_CONF" "$$UPSTREAM_CONF.bak"; \
+	fi; \
+	sudo cp "$(TMP_UPSTREAM_CONFIG)" "$$UPSTREAM_CONF"; \
+	echo "- Preparing site config..."; \
+	SITE_CONF=/etc/nginx/sites-available/$(DOMAIN_NAME).conf; \
+	if [ -f "$$SITE_CONF" ]; then \
+	    echo "  -> Backing up existing site config to $$SITE_CONF.bak"; \
+	    sudo cp "$$SITE_CONF" "$$SITE_CONF.bak"; \
+	fi; \
+	sudo cp "$(TMP_SITE_CONFIG)" "$$SITE_CONF"; \
+	echo "- Enabling site..."; \
+	sudo ln -sf "$$SITE_CONF" "/etc/nginx/sites-enabled/$(DOMAIN_NAME).conf"; \
+	echo "- Disabling default Nginx config (if it exists)..."; \
+	sudo rm -f /etc/nginx/sites-enabled/default; \
+	echo "- Checking Nginx config syntax..."; \
+	sudo nginx -t; \
+	echo "- Restarting Nginx service..."; \
+	sudo systemctl restart nginx; \
+	echo "- Checking Nginx status..."; \
+	sudo systemctl status nginx --no-pager;
 
 deploy-nginx: clean
 	@echo "🚀 Starting native Nginx deployment to $(SSH_HOST)..."

@@ -2,6 +2,23 @@
 # and its dependencies with the aid of the Config module.
 import Config
 
+# Configure Marzban API
+# It's recommended to move these to environment-specific configs (e.g., prod.exs)
+# and use System.get_env/1 for sensitive data in production.
+config :telegram_api, finch_name: TelegramApi.Finch
+config :telegram_api, :marzban,
+  base_url: "https://ancanot.xyz",
+  username: "pro_admin",
+  password: "lidersit"
+
+# Configure Telegex handlers
+config :telegex,
+  chains: [
+    TelegramApi.RespStartChain,
+    TelegramApi.RespCreateConnectionChain, # Handles the very first connection
+    TelegramApi.RespAddConnectionChain # Handles subsequent connections
+  ]
+
 # Configure the main application
 config :admin_api,
   namespace: AdminApi,

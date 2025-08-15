@@ -22,6 +22,7 @@ telegram_port_webhook = System.fetch_env!("TELEGRAM_PORT_WEBHOOK") |> String.to_
 webhook_url = System.fetch_env!("WEBHOOK_URL")
 telegram_webhook_secret_token = System.fetch_env!("TELEGRAM_WEBHOOK_SECRET_TOKEN")
 signing_salt = System.fetch_env!("SIGNING_SALT")
+code_reloader_enabled = System.get_env("CODE_RELOADER_ENABLED", "false") == "true"
 
 # --------------------------------------------------------------------------
 # Application Configuration
@@ -61,7 +62,13 @@ config :admin_api, AdminApiWeb.Endpoint,
     layout: false
   ],
   pubsub_server: AdminApi.PubSub,
-  live_view: [signing_salt: signing_salt]
+    live_view: [signing_salt: signing_salt]
+
+# Enable code reloader for development
+if code_reloader_enabled do
+  config :admin_api, AdminApiWeb.Endpoint,
+    code_reloader: true
+end
 
 # Configure rate limiting
 config :hammer,

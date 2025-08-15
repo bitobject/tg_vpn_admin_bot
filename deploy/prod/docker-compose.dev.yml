@@ -26,7 +26,7 @@ services:
   app:
     build:
       context: ../..
-      dockerfile: deploy/prod/Dockerfile
+      dockerfile: deploy/prod/Dockerfile.iex
     env_file:
       - .env
     container_name: APP_CONTAINER_NAME
@@ -34,20 +34,27 @@ services:
     ports:
       - "${APP_PORT_HTTP}:${APP_PORT_HTTP}"
       - "${TELEGRAM_PORT_WEBHOOK}:${TELEGRAM_PORT_WEBHOOK}"
+    volumes:
+      - ../../apps:/app/apps
+      - ../../config:/app/config
+      - ../../mix.exs:/app/mix.exs
+      - ../../mix.lock:/app/mix.lock
+      - ../../rel:/app/rel
+
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - telegram_admin_network
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+      - 8.8.4.4
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT_HTTP}/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
-      - 8.8.4.4
 
 volumes:
   postgres_data:

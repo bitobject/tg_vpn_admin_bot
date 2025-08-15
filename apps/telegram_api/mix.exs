@@ -26,7 +26,7 @@ defmodule TelegramApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:core, in_umbrella: true, runtime: false},
+      {:core, in_umbrella: true, runtime: true},
       {:telegex, "~>1.8.0"},
       {:finch, "~> 0.18"},
       {:multipart, "~> 0.4"},

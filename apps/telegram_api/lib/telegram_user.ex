@@ -19,6 +19,8 @@ defmodule TelegramUser do
     field(:supports_inline_queries, :boolean)
     field(:can_connect_to_business, :boolean)
 
+    field :marzban_users, {:array, :string}, default: []
+
     timestamps()
   end
 
@@ -37,7 +39,8 @@ defmodule TelegramUser do
       :can_join_groups,
       :can_read_all_group_messages,
       :supports_inline_queries,
-      :can_connect_to_business
+      :can_connect_to_business,
+      :marzban_users
     ])
     |> validate_required([:id, :username, :is_bot, :first_name])
     |> unique_constraint(:id)

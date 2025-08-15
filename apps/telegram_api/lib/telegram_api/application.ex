@@ -7,7 +7,10 @@ defmodule TelegramApi.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [TelegramApi.HookHandler]
+        children = [
+      {Finch, name: TelegramApi.Finch},
+      TelegramApi.HookHandler
+    ]
 
     opts = [strategy: :one_for_one, name: TelegramApi.Supervisor]
     Supervisor.start_link(children, opts)
