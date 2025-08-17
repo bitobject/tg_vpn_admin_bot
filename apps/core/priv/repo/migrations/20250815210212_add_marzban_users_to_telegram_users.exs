@@ -1,4 +1,4 @@
-defmodule TelegramApi.Repo.Migrations.AddMarzbanUsersToTelegramUsers do
+defmodule Core.Repo.Migrations.AddMarzbanUsersToTelegramUsers do
   use Ecto.Migration
 
   def change do

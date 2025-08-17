@@ -62,12 +62,11 @@ config :admin_api, AdminApiWeb.Endpoint,
     layout: false
   ],
   pubsub_server: AdminApi.PubSub,
-    live_view: [signing_salt: signing_salt]
+  live_view: [signing_salt: signing_salt]
 
 # Enable code reloader for development
 if code_reloader_enabled do
-  config :admin_api, AdminApiWeb.Endpoint,
-    code_reloader: true
+  config :admin_api, AdminApiWeb.Endpoint, code_reloader: true
 end
 
 # Configure rate limiting

@@ -19,7 +19,7 @@ defmodule TelegramUser do
     field(:supports_inline_queries, :boolean)
     field(:can_connect_to_business, :boolean)
 
-    field :marzban_users, {:array, :string}, default: []
+    field(:marzban_users, {:array, :string}, default: [])
 
     timestamps()
   end

@@ -7,16 +7,28 @@ defmodule TelegramApi.Chain.EchoTextChain do
 
   alias TelegramApi.Context
 
+  require Logger
+
   @impl Telegex.Chain
-  def handle(%{payload: %{"message" => %{"text" => text, "chat" => %{"id" => chat_id, "type" => "private"}}}} = update, context) 
-    when is_binary(text) do
+  def handle(
+        %Telegex.Type.Update{message: %Telegex.Type.Message{text: text, chat: %{type: "private"}}} =
+          update,
+        context
+      ) do
+    # Ignore commands
     if String.starts_with?(text, "/") do
-      {:next, update, context}
+      {:next, context}
     else
-      Context.send_message(chat_id, text)
-      {:done, context}
+      with {:ok, chat_id} <- Context.get_chat_id(update) do
+        Task.start(fn -> Context.send_message(chat_id, text) end)
+      else
+        error ->
+          Logger.error("Could not extract chat_id in EchoTextChain: #{inspect(error)}")
+      end
+
+      {:stop, context}
     end
   end
 
-
+  def handle(_update, context), do: {:next, context}
 end

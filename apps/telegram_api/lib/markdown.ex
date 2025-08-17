@@ -1,17 +1,34 @@
 defmodule TelegramApi.Markdown do
   @moduledoc """
-  A utility module for handling Telegram's MarkdownV2 escaping.
+  A simple helper for escaping Telegram "Markdown" special characters.
   """
 
-  # According to https://core.telegram.org/bots/api#markdownv2-style
-  # The characters '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!' must be escaped.
-  @chars_to_escape ["_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"]
+  @escape_chars [
+    "_",
+    "*",
+    "[",
+    "]",
+    "(",
+    ")",
+    "~",
+    "`",
+    ">",
+    "#",
+    "+",
+    "-",
+    "=",
+    "|",
+    "{",
+    "}",
+    ".",
+    "!"
+  ]
 
   @doc """
-  Escapes a string for Telegram's MarkdownV2 format.
+  Escapes all special "Markdown" characters in a string.
   """
   def escape(text) when is_binary(text) do
-    Enum.reduce(@chars_to_escape, text, fn char, acc ->
+    Enum.reduce(@escape_chars, text, fn char, acc ->
       String.replace(acc, char, "\\" <> char)
     end)
   end

@@ -3,86 +3,98 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
 
   require Logger
 
+  alias Core.Context, as: CoreContext
+  alias TelegramApi.Chain.ConnectionHelper
   alias TelegramApi.Context
-  alias TelegramApi.Marzban
-  alias TelegramApi.Markdown
 
   @impl Telegex.Chain
-  def handle(%{payload: %{"callback_query" => %{"id" => query_id, "data" => "create_connection:v1"}}} = update, context) do
+  def handle(
+        %Telegex.Type.Update{
+          callback_query: %Telegex.Type.CallbackQuery{
+            id: query_id,
+            data: "create_connection:" <> tariff_id_str
+          }
+        } = update,
+        context
+      ) do
     Context.answer_callback_query(query_id)
+    tariff_id = String.to_integer(tariff_id_str)
 
     with {:ok, chat_id} <- Context.get_chat_id(update),
          {:ok, from} <- Context.get_from(update),
          {:ok, username} <- Context.get_username(from) do
-      case Context.get_by_username(username) do
-        nil ->
-          send_error_message(chat_id, "Пользователь не найден. Пожалуйста, выполните /start")
-
-        user ->
-          if Enum.empty?(user.marzban_users) do
-            create_first_connection(chat_id, user)
-          else
-            send_already_exists_message(chat_id)
-          end
-      end
+      Task.start(fn ->
+        user = CoreContext.get_or_create_user(%{telegram_id: from.id, username: username})
+        process_connection_creation(chat_id, user, tariff_id)
+      end)
     else
-      _ ->
-        Logger.error("Could not extract required data from update in RespCreateConnectionChain")
+      error ->
+        Logger.error(
+          "Could not extract required data from update in RespCreateConnectionChain: #{inspect(error)}"
+        )
     end
 
-    {:done, context}
+    {:stop, context}
   end
 
-  defp create_first_connection(chat_id, user) do
-    case Marzban.create_user(user.username) do
-      {:ok, marzban_user} ->
-        Context.add_marzban_user(user, marzban_user.username)
-        send_success_message(chat_id, marzban_user)
+  def handle(
+        %Telegex.Type.Update{
+          callback_query: %Telegex.Type.CallbackQuery{id: query_id, data: "create_connection:v1"}
+        } = update,
+        context
+      ) do
+    Context.answer_callback_query(query_id)
 
-      {:error, reason} ->
-        Logger.error("Failed to create Marzban user: #{inspect(reason)}")
-        send_error_message(chat_id, "Не удалось создать подключение в Marzban.")
+    with {:ok, chat_id} <- Context.get_chat_id(update) do
+      tariffs = CoreContext.list_active_tariffs()
+
+      keyboard = %{
+        inline_keyboard: [
+          Enum.map(tariffs, fn tariff ->
+            %{
+              text: "#{tariff.name} - #{tariff.price} руб.",
+              callback_data: "create_connection:#{tariff.id}"
+            }
+          end)
+        ]
+      }
+
+      Context.send_message(chat_id, "Выберите тариф для нового подключения:",
+        reply_markup: keyboard
+      )
+    end
+
+    {:stop, context}
+  end
+
+  def handle(_update, context), do: {:ok, context}
+
+  defp process_connection_creation(chat_id, user, tariff_id) do
+    case CoreContext.get_tariff(tariff_id) do
+      nil ->
+        send_error_message(chat_id, "Тариф не найден. Пожалуйста, попробуйте еще раз.")
+
+      tariff ->
+        case ConnectionHelper.create_marzban_user(tariff, user.username) do
+          {:ok, marzban_user} ->
+            CoreContext.add_marzban_user_to_telegram_user(user, marzban_user["username"])
+            send_success_message(chat_id, marzban_user)
+
+          {:error, reason} ->
+            Logger.error("Failed to create Marzban user: #{inspect(reason)}")
+            send_error_message(chat_id, "Не удалось создать подключение.")
+        end
     end
   end
 
   defp send_success_message(chat_id, marzban_user) do
-    subscription_url = marzban_user.subscription_url
-    qr_code_url = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=#{subscription_url}"
-
-    text =
-      ~s("""
-      ✅ *Ваше первое подключение создано\!* 
-
-      Используйте QR-код или ссылку ниже для импорта\.
-
-      *Ссылка*:
-      `#{Markdown.escape(subscription_url)}`
-      """)
-
-    Context.send_photo(chat_id, qr_code_url, caption: text, parse_mode: "MarkdownV2")
-  end
-
-  defp send_already_exists_message(chat_id) do
-    text =
-      ~s("""
-      🤔 У вас уже есть активные подключения\.
-
-      Для создания дополнительных используйте кнопку *"➕ Добавить подключение"*\.
-      """)
-
-    Context.send_message(chat_id, text, parse_mode: "MarkdownV2")
+    Context.send_message(chat_id, "✅ *Ваше новое подключение создано!*", parse_mode: "Markdown")
+    details = ConnectionHelper.generate_connection_details(marzban_user)
+    ConnectionHelper.send_connection_details(chat_id, details)
   end
 
   defp send_error_message(chat_id, reason) do
-    text = "❌ *Ошибка*\n#{Markdown.escape(reason)}"
-
-    payload = %{
-      method: "sendMessage",
-      chat_id: chat_id,
-      text: text,
-      parse_mode: "MarkdownV2"
-    }
-
-    {:done, %{payload: payload}}
+    text = "❌ *Ошибка*\n#{reason}"
+    Context.send_message(chat_id, text, parse_mode: "Markdown")
   end
 end

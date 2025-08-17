@@ -6,8 +6,10 @@ defmodule TelegramApi.ChainHandler do
   pipeline([
     # Command handlers
     TelegramApi.Chain.RespStartChain,
+    TelegramApi.Chain.RespTariffsChain,
 
     # Callback query handlers
+    TelegramApi.Chain.RespPayTariffChain,
     TelegramApi.Chain.RespCreateConnectionChain,
     TelegramApi.Chain.RespAddConnectionChain,
     TelegramApi.Chain.PersonalAccountChain,

@@ -50,7 +50,8 @@ defmodule TelegramApi.Context do
   @doc """
   Extracts chat_id from an update.
   """
-  def get_chat_id(update), do: IO.inspect(update, label: "CONTEXT: get_chat_id received") |> do_get_chat_id()
+  def get_chat_id(update),
+    do: IO.inspect(update, label: "CONTEXT: get_chat_id received") |> do_get_chat_id()
 
   defp do_get_chat_id(%{message: %{chat: %{id: id}}}), do: {:ok, id}
   defp do_get_chat_id(%{callback_query: %{message: %{chat: %{id: id}}}}), do: {:ok, id}
@@ -59,7 +60,8 @@ defmodule TelegramApi.Context do
   @doc """
   Extracts the 'from' field from an update.
   """
-  def get_from(update), do: IO.inspect(update, label: "CONTEXT: get_from received") |> do_get_from()
+  def get_from(update),
+    do: IO.inspect(update, label: "CONTEXT: get_from received") |> do_get_from()
 
   defp do_get_from(%{message: %{from: from}}), do: {:ok, from}
   defp do_get_from(%{callback_query: %{from: from}}), do: {:ok, from}
@@ -68,7 +70,8 @@ defmodule TelegramApi.Context do
   @doc """
   Extracts username from the 'from' field.
   """
-  def get_username(from), do: IO.inspect(from, label: "CONTEXT: get_username received") |> do_get_username()
+  def get_username(from),
+    do: IO.inspect(from, label: "CONTEXT: get_username received") |> do_get_username()
 
   defp do_get_username(%{username: username}), do: {:ok, username}
   defp do_get_username(_), do: {:error, :no_username}

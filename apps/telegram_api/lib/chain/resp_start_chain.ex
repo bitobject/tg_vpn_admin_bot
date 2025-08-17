@@ -4,7 +4,7 @@ defmodule TelegramApi.Chain.RespStartChain do
   require Logger
 
   alias TelegramApi.Context
-  alias TelegramApi.Markdown
+  alias Core.Context, as: CoreContext
 
   @impl Telegex.Chain
   def handle(%{message: %Telegex.Type.Message{text: "/start"}} = update, context) do
@@ -13,35 +13,27 @@ defmodule TelegramApi.Chain.RespStartChain do
          {:ok, username} <- Context.get_username(from) do
       # This Task.start is optional but good practice to not block the chain
       Task.start(fn ->
-        user = get_or_create_user(from, username)
+        user = CoreContext.get_or_create_user(%{telegram_id: from.id, username: username})
         send_welcome_message(chat_id, user)
       end)
     else
       error ->
-        Logger.error("Could not extract required data from update in RespStartChain: #{inspect(error)}")
+        Logger.error(
+          "Could not extract required data from update in RespStartChain: #{inspect(error)}"
+        )
     end
 
     {:stop, context}
   end
 
-  defp get_or_create_user(from, username) do
-    case Context.get_by_username(username) do
-      nil ->
-        Logger.info("User not found, creating new one in local DB: #{username}")
-        {:ok, user} = Context.create_user(%{username: username, telegram_id: from.id})
-        user
-
-      user ->
-        user
-    end
-  end
+  def handle(_update, context), do: {:ok, context}
 
   defp send_welcome_message(chat_id, user) do
     if Enum.empty?(user.marzban_users) do
       # User has NO connections
       text =
         """
-        👋 *Добро пожаловать, #{user.username}!* 
+        👋 *Добро пожаловать, #{user.username}!*
 
         Это бот для управления вашими подключениями к VPN.
 
@@ -51,7 +43,7 @@ defmodule TelegramApi.Chain.RespStartChain do
 
       keyboard = %{
         inline_keyboard: [
-          [%{text: "Создать подключение", callback_data: "create_connection:v1"}]
+          [%{text: "Создать подключение", callback_data: "add_connection:v1"}]
         ]
       }
 
@@ -60,15 +52,15 @@ defmodule TelegramApi.Chain.RespStartChain do
       # User HAS connections
       connections_list =
         user.marzban_users
-        |> Enum.map(&("  - `#{&1}`"))
+        |> Enum.map(&"  - `#{&1}`")
         |> Enum.join("\n")
 
       text =
         """
-        👋 *С возвращением, #{user.username}!* 
+        👋 *С возвращением, #{user.username}!*
 
         Ваши активные подключения:
-#{connections_list}
+        #{connections_list}
 
         Вы можете добавить еще одно или перейти в личный кабинет.
         """
