@@ -9,6 +9,9 @@ defmodule Core.Schemas.User do
 
     # The user's unique telegram ID
     field(:telegram_id, :integer, source: :id)
+    field(:first_name, :string)
+    field(:last_name, :string)
+    field(:language_code, :string)
 
     # List of usernames created for this user in Marzban
     field(:marzban_users, {:array, :string}, default: [])
@@ -19,8 +22,15 @@ defmodule Core.Schemas.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:username, :telegram_id, :marzban_users])
-    |> validate_required([:username, :telegram_id])
+    |> cast(attrs, [
+      :username,
+      :telegram_id,
+      :first_name,
+      :last_name,
+      :language_code,
+      :marzban_users
+    ])
+    |> validate_required([:username, :telegram_id, :first_name])
     |> unique_constraint(:telegram_id, name: :telegram_users_id_index)
   end
 end

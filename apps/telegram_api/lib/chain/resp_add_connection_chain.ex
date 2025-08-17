@@ -4,7 +4,7 @@ defmodule TelegramApi.Chain.RespAddConnectionChain do
   require Logger
 
   alias Core.Context, as: CoreContext
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(
@@ -14,9 +14,9 @@ defmodule TelegramApi.Chain.RespAddConnectionChain do
           update,
         context
       ) do
-    Context.answer_callback_query(query_id)
+    Telegram.answer_callback_query(query_id)
 
-    case Context.get_chat_id(update) do
+    case Telegram.get_chat_id(update) do
       {:ok, chat_id} ->
         Task.start(fn ->
           tariffs = CoreContext.list_active_tariffs()
@@ -46,6 +46,6 @@ defmodule TelegramApi.Chain.RespAddConnectionChain do
       ]
     }
 
-    Context.send_message(chat_id, text, reply_markup: keyboard)
+    Telegram.send_message(chat_id, text, reply_markup: keyboard)
   end
 end

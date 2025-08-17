@@ -11,7 +11,6 @@ defmodule Core.Application do
       # Start the Ecto repository
       Core.Repo,
       # Start the Telemetry supervisor
-      CoreWeb.Telemetry
       # Start a worker by calling: Core.Worker.start_link(arg)
       # {Core.Worker, arg}
     ]

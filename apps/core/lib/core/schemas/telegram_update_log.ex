@@ -1,5 +1,4 @@
-# Схема TelegramUpdateLog (перенос из core)
-defmodule TelegramUpdateLog do
+defmodule Core.Schemas.TelegramUpdateLog do
   use Ecto.Schema
   import Ecto.Changeset
 

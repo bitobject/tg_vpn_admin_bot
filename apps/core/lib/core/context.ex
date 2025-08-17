@@ -6,6 +6,8 @@ defmodule Core.Context do
   alias Core.Repo
 
   alias Core.Schemas.User
+  alias Core.Schemas.TelegramUpdateLog
+
   alias Core.Queries.TariffQueries
   alias Core.Queries.UserQueries
 
@@ -25,37 +27,22 @@ defmodule Core.Context do
 
   defdelegate get_user_by_telegram_id(telegram_id), to: UserQueries, as: :get_by_telegram_id
 
-  @doc """
-  Gets a user by their Telegram ID, or creates a new one if not found.
-  Returns the user struct on success, or nil on failure.
-  """
-  def get_or_create_user(%{telegram_id: telegram_id} = attrs) do
-    case UserQueries.get_by_telegram_id(telegram_id) do
-      nil ->
-        Logger.info("User with telegram_id=#{telegram_id} not found, creating new one.")
-        create_user(attrs)
-
-      user ->
-        # User already exists, return it.
-        {:ok, user}
-    end
-    |> case do
-      {:ok, user} ->
-        user
-
-      {:error, changeset} ->
-        Logger.error("Failed to create or get user: #{inspect(changeset.errors)}")
-        nil
-    end
+  def get_user_by_username(username) do
+    Repo.get(User, username)
   end
 
-  @doc """
-  Creates a user.
-  """
-  def create_user(attrs) do
-    %User{}
-    |> User.changeset(attrs)
-    |> Repo.insert()
+  def create_or_update_user(attrs) do
+    case get_user_by_telegram_id(attrs.telegram_id) do
+      nil ->
+        %User{}
+        |> User.changeset(attrs)
+        |> Repo.insert()
+
+      user ->
+        user
+        |> User.changeset(attrs)
+        |> Repo.update()
+    end
   end
 
   @doc """
@@ -68,4 +55,15 @@ defmodule Core.Context do
     |> User.changeset(%{marzban_users: new_marzban_users})
     |> Repo.update()
   end
+
+  #
+  # Telegram Update Log
+  #
+
+  def log_update(attrs) do
+    %TelegramUpdateLog{}
+    |> Core.Schemas.TelegramUpdateLog.changeset(attrs)
+    |> Repo.insert()
+  end
+
 end

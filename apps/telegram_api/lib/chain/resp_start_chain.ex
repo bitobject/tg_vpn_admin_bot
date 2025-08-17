@@ -3,18 +3,30 @@ defmodule TelegramApi.Chain.RespStartChain do
 
   require Logger
 
-  alias TelegramApi.Context
   alias Core.Context, as: CoreContext
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(%{message: %Telegex.Type.Message{text: "/start"}} = update, context) do
-    with {:ok, chat_id} <- Context.get_chat_id(update),
-         {:ok, from} <- Context.get_from(update),
-         {:ok, username} <- Context.get_username(from) do
-      # This Task.start is optional but good practice to not block the chain
+    with {:ok, chat_id} <- Telegram.get_chat_id(update),
+         {:ok, from} <- Telegram.get_from(update),
+         {:ok, username} <- Telegram.get_username(from) do
       Task.start(fn ->
-        user = CoreContext.get_or_create_user(%{telegram_id: from.id, username: username})
-        send_welcome_message(chat_id, user)
+        attrs = %{
+          telegram_id: from.id,
+          username: username,
+          first_name: from.first_name,
+          last_name: from.last_name,
+          language_code: from.language_code
+        }
+
+        case CoreContext.create_or_update_user(attrs) do
+          {:ok, user} ->
+            send_welcome_message(chat_id, user)
+
+          {:error, changeset} ->
+            Logger.error("Failed to create or update user in RespStartChain: #{inspect(changeset)}")
+        end
       end)
     else
       error ->
@@ -29,52 +41,38 @@ defmodule TelegramApi.Chain.RespStartChain do
   def handle(_update, context), do: {:ok, context}
 
   defp send_welcome_message(chat_id, user) do
-    if Enum.empty?(user.marzban_users) do
-      # User has NO connections
-      text =
-        """
-        👋 *Добро пожаловать, #{user.username}!*
+    text = welcome_text(user)
+    keyboard = main_keyboard()
 
-        Это бот для управления вашими подключениями к VPN.
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
+  end
 
-        У вас еще нет активных подключений.
-        Нажмите *Создать подключение*, чтобы получить ваш первый доступ.
-        """
+  defp welcome_text(user) do
+    if user.inserted_at == user.updated_at do
+      """
+      👋 *Добро пожаловать, #{user.first_name}!*
 
-      keyboard = %{
-        inline_keyboard: [
-          [%{text: "Создать подключение", callback_data: "add_connection:v1"}]
-        ]
-      }
+      Это бот для управления вашими VPN-подключениями.
 
-      Context.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
+      Воспользуйтесь кнопками ниже для навигации.
+      """
     else
-      # User HAS connections
-      connections_list =
-        user.marzban_users
-        |> Enum.map(&"  - `#{&1}`")
-        |> Enum.join("\n")
+      """
+      👋 *С возвращением, #{user.first_name}!*
 
-      text =
-        """
-        👋 *С возвращением, #{user.username}!*
-
-        Ваши активные подключения:
-        #{connections_list}
-
-        Вы можете добавить еще одно или перейти в личный кабинет.
-        """
-
-      keyboard = %{
-        inline_keyboard: [
-          [
-            %{text: "➕ Добавить подключение", callback_data: "add_connection:v1"},
-            %{text: "Личный кабинет", callback_data: "personal_account:v1"}
-          ]
-        ]
-      }
-
-      Context.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
+      Рад снова вас видеть. Воспользуйтесь кнопками ниже для навигации.
+      """
     end
+  end
+
+  defp main_keyboard do
+    %{
+      keyboard: [
+        [%{text: "Личный кабинет 💼"}],
+        [%{text: "Тарифы 💳"}, %{text: "Поддержка 🆘"}]
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: false
+    }
   end
 end

@@ -5,7 +5,7 @@ defmodule TelegramApi.Chain.EchoTextChain do
 
   use Telegex.Chain
 
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   require Logger
 
@@ -19,8 +19,8 @@ defmodule TelegramApi.Chain.EchoTextChain do
     if String.starts_with?(text, "/") do
       {:next, context}
     else
-      with {:ok, chat_id} <- Context.get_chat_id(update) do
-        Task.start(fn -> Context.send_message(chat_id, text) end)
+      with {:ok, chat_id} <- Telegram.get_chat_id(update) do
+        Task.start(fn -> Telegram.send_message(chat_id, text) end)
       else
         error ->
           Logger.error("Could not extract chat_id in EchoTextChain: #{inspect(error)}")

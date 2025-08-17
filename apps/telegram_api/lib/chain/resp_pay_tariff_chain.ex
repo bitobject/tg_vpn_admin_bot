@@ -6,7 +6,7 @@ defmodule TelegramApi.Chain.RespPayTariffChain do
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
   alias TelegramApi.Marzban
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(
@@ -19,9 +19,9 @@ defmodule TelegramApi.Chain.RespPayTariffChain do
           update,
         context
       ) do
-    Context.answer_callback_query(query_id)
+    Telegram.answer_callback_query(query_id)
 
-    case Context.get_chat_id(update) do
+    case Telegram.get_chat_id(update) do
       {:ok, chat_id} ->
         with [tariff_id_str, username] <- String.split(payload, ":", parts: 2),
              {:ok, tariff_id} <- safe_to_integer(tariff_id_str) do
@@ -91,11 +91,11 @@ defmodule TelegramApi.Chain.RespPayTariffChain do
     Новая дата окончания: *#{expire_date_str}*
     """
 
-    Context.send_message(chat_id, text, parse_mode: "Markdown")
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown")
   end
 
   defp send_error_message(chat_id, reason) do
     text = "❌ *Ошибка*\n#{reason}"
-    Context.send_message(chat_id, text, parse_mode: "Markdown")
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown")
   end
 end

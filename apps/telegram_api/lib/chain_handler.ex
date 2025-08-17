@@ -11,7 +11,7 @@ defmodule TelegramApi.ChainHandler do
     # Callback query handlers
     TelegramApi.Chain.RespPayTariffChain,
     TelegramApi.Chain.RespCreateConnectionChain,
-    TelegramApi.Chain.RespAddConnectionChain,
+    TelegramApi.Chain.ShowConnectionLinkChain,
     TelegramApi.Chain.PersonalAccountChain,
     TelegramApi.Chain.CallHelloChain,
 

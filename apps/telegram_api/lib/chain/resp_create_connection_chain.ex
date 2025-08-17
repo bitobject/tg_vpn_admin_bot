@@ -5,7 +5,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
 
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(
@@ -17,15 +17,29 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
         } = update,
         context
       ) do
-    Context.answer_callback_query(query_id)
+    Telegram.answer_callback_query(query_id)
     tariff_id = String.to_integer(tariff_id_str)
 
-    with {:ok, chat_id} <- Context.get_chat_id(update),
-         {:ok, from} <- Context.get_from(update),
-         {:ok, username} <- Context.get_username(from) do
+    with {:ok, chat_id} <- Telegram.get_chat_id(update),
+         {:ok, from} <- Telegram.get_from(update),
+         {:ok, username} <- Telegram.get_username(from) do
       Task.start(fn ->
-        user = CoreContext.get_or_create_user(%{telegram_id: from.id, username: username})
-        process_connection_creation(chat_id, user, tariff_id)
+        attrs = %{
+          telegram_id: from.id,
+          username: username,
+          first_name: from.first_name,
+          last_name: from.last_name,
+          language_code: from.language_code
+        }
+
+        case CoreContext.create_or_update_user(attrs) do
+          {:ok, user} ->
+            process_connection_creation(chat_id, user, tariff_id)
+
+          {:error, changeset} ->
+            Logger.error("Failed to create or update user: #{inspect(changeset)}")
+            send_error_message(chat_id, "Не удалось обработать ваш профиль. Попробуйте позже.")
+        end
       end)
     else
       error ->
@@ -43,9 +57,9 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
         } = update,
         context
       ) do
-    Context.answer_callback_query(query_id)
+    Telegram.answer_callback_query(query_id)
 
-    with {:ok, chat_id} <- Context.get_chat_id(update) do
+    with {:ok, chat_id} <- Telegram.get_chat_id(update) do
       tariffs = CoreContext.list_active_tariffs()
 
       keyboard = %{
@@ -59,7 +73,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
         ]
       }
 
-      Context.send_message(chat_id, "Выберите тариф для нового подключения:",
+      Telegram.send_message(chat_id, "Выберите тариф для нового подключения:",
         reply_markup: keyboard
       )
     end
@@ -88,13 +102,13 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
   end
 
   defp send_success_message(chat_id, marzban_user) do
-    Context.send_message(chat_id, "✅ *Ваше новое подключение создано!*", parse_mode: "Markdown")
-    details = ConnectionHelper.generate_connection_details(marzban_user)
-    ConnectionHelper.send_connection_details(chat_id, details)
+    Telegram.send_message(chat_id, "✅ *Ваше новое подключение создано!*", parse_mode: "Markdown")
+    text = ConnectionHelper.generate_connection_text(marzban_user)
+    ConnectionHelper.send_connection_card(chat_id, marzban_user["username"], text)
   end
 
   defp send_error_message(chat_id, reason) do
     text = "❌ *Ошибка*\n#{reason}"
-    Context.send_message(chat_id, text, parse_mode: "Markdown")
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown")
   end
 end

@@ -9,7 +9,7 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
 
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(
@@ -18,28 +18,85 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
         } = update,
         context
       ) do
-    Context.answer_callback_query(query_id)
+    Telegram.answer_callback_query(query_id)
+    process_request(update, context)
+  end
 
-    with {:ok, chat_id} <- Context.get_chat_id(update),
-         {:ok, from} <- Context.get_from(update) do
-      Task.start(fn ->
-        case CoreContext.get_user_by_telegram_id(from.id) do
-          nil ->
-            Context.send_message(chat_id, "Пользователь не найден. Пожалуйста, нажмите /start")
+  @impl Telegex.Chain
+  def handle(
+        %Telegex.Type.Update{
+          message: %Telegex.Type.Message{text: "Личный кабинет 💼"}
+        } = update,
+        context
+      ) do
+    process_request(update, context)
+  end
 
-          user ->
-            ConnectionHelper.process_user_connections(chat_id, user)
-        end
-      end)
-    else
-      error ->
-        Logger.error(
-          "Could not extract required data from update in PersonalAccountChain: #{inspect(error)}"
-        )
+  def handle(_update, context), do: {:ok, context}
+
+  defp process_request(%Telegex.Type.Update{message: _} = update, context) do
+    # User sent a text message "Личный кабинет 💼"
+    with {:ok, chat_id} <- Telegram.get_chat_id(update),
+         {:ok, %{id: telegram_id}} <- Telegram.get_from(update) do
+      # Send a temporary message and then edit it
+      with {:ok, %Telegex.Type.Message{message_id: message_id}} <-
+             Telegram.send_message(chat_id, "Загружаю информацию о ваших подключениях...") do
+        start_user_lookup_task(chat_id, message_id, telegram_id)
+      end
     end
 
     {:stop, context}
   end
 
-  def handle(_update, context), do: {:ok, context}
+  defp process_request(
+         %Telegex.Type.Update{callback_query: %{message: %{message_id: message_id}}} = update,
+         context
+       ) do
+    # User pressed an inline button
+    with {:ok, chat_id} <- Telegram.get_chat_id(update),
+         {:ok, %{id: telegram_id}} <- Telegram.get_from(update) do
+      # Edit the existing message directly
+      start_user_lookup_task(chat_id, message_id, telegram_id)
+    end
+
+    {:stop, context}
+  end
+
+  defp start_user_lookup_task(chat_id, message_id, telegram_id) do
+    Task.Supervisor.start_child(
+      TelegramApi.TaskSupervisor,
+      fn -> __MODULE__.run_async_user_lookup(chat_id, message_id, telegram_id) end
+    )
+  end
+
+  def run_async_user_lookup(chat_id, message_id, telegram_id) do
+    try do
+      IO.inspect(telegram_id, label: "[PersonalAccountChain] Task started for user ID")
+      Logger.info("Task started for user ID: #{telegram_id}")
+
+      case CoreContext.get_user_by_telegram_id(telegram_id) do
+        nil ->
+          IO.inspect(telegram_id, label: "[PersonalAccountChain] User not found in DB")
+          Logger.warning("User with telegram_id #{telegram_id} not found in DB.")
+
+          Telegram.edit_message_text(
+            chat_id,
+            message_id,
+            "Пользователь не найден. Пожалуйста, нажмите /start"
+          )
+
+        user ->
+          IO.inspect(user, label: "[PersonalAccountChain] User found, calling ConnectionHelper")
+          Logger.info("User found, processing connections for user: #{user.telegram_id}")
+          ConnectionHelper.process_user_connections(chat_id, user, message_id)
+      end
+    catch
+      kind, reason ->
+        stacktrace = __STACKTRACE__
+        IO.inspect({kind, reason, stacktrace}, label: "[PersonalAccountChain] CRASH IN TASK")
+        Logger.error(
+          "Error in PersonalAccountChain Task: #{kind}: #{inspect(reason)}\nStacktrace: #{inspect(stacktrace)}"
+        )
+    end
+  end
 end

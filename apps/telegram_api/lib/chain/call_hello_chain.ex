@@ -5,7 +5,7 @@ defmodule TelegramApi.Chain.CallHelloChain do
 
   use Telegex.Chain
 
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(
@@ -14,7 +14,7 @@ defmodule TelegramApi.Chain.CallHelloChain do
         } = _update,
         context
       ) do
-    Context.answer_callback_query(query_id, text: "Конфигурация создана", show_alert: true)
+    Telegram.answer_callback_query(query_id, text: "Конфигурация создана", show_alert: true)
     {:stop, context}
   end
 

@@ -1,31 +1,33 @@
 defmodule TelegramApi.Chain.ConnectionHelper do
   require Logger
-  alias TelegramApi.Context, as: Context
+  alias TelegramApi.Telegram
   alias TelegramApi.Marzban
 
   @type marzban_user :: map()
   @type tariff :: map()
 
-  @spec process_user_connections(integer(), any()) :: :ok | :failed_to_fetch
-  def process_user_connections(chat_id, user) do
+  @spec process_user_connections(integer(), any(), integer()) :: :ok | :failed_to_fetch
+  def process_user_connections(chat_id, user, message_id) do
+    IO.inspect({chat_id, user, message_id}, label: "[ConnectionHelper] Entered process_user_connections")
     marzban_usernames = user.marzban_users
+    IO.inspect(marzban_usernames, label: "[ConnectionHelper] Usernames to process")
 
     if Enum.empty?(marzban_usernames) do
-      Context.send_message(
+      Telegram.edit_message_text(
         chat_id,
+        message_id,
         "У вас еще нет активных подключений. Вы можете создать новое в меню тарифов."
       )
 
       :ok
     else
-      Context.send_message(chat_id, "Загружаю информацию о ваших подключениях...")
-
       tasks =
         Enum.map(marzban_usernames, fn username ->
           Task.async(fn -> {username, Marzban.get_user(username)} end)
         end)
 
       results = Task.await_many(tasks, 30000)
+      IO.inspect(results, label: "[ConnectionHelper] Marzban API results")
 
       {ok_results, error_results} =
         Enum.split_with(results, fn
@@ -38,17 +40,32 @@ defmodule TelegramApi.Chain.ConnectionHelper do
       end
 
       if Enum.empty?(ok_results) and not Enum.empty?(marzban_usernames) do
-        Context.send_message(
+        Telegram.edit_message_text(
           chat_id,
-          "Не найдено активных подключений, связанных с вашим аккаунтом."
+          message_id,
+          "Не удалось загрузить информацию о ваших подключениях. Попробуйте позже."
         )
       else
-        users = Enum.map(ok_results, fn {_, {:ok, user}} -> user end)
+        users = Enum.map(ok_results, fn {_username, {:ok, user}} -> user end)
+        IO.inspect(users, label: "[ConnectionHelper] Parsed Marzban users")
 
-        Enum.each(users, fn user ->
-          details = generate_connection_details(user)
-          send_connection_details(chat_id, details)
-        end)
+        # Consolidate all connections into one message
+        full_text =
+          users
+          |> Enum.map(&generate_connection_text(&1))
+          |> Enum.join("\n\n#{String.duplicate("—", 20)}\n\n")
+        IO.inspect(full_text, label: "[ConnectionHelper] Final text to be sent")
+
+        keyboard = 
+          (Enum.map(users, fn user ->
+            [%{text: "🔗 Получить ссылки (#{user["username"]})", callback_data: "show_connection_link:#{user["username"]}"}]
+          end) ++ [[%{text: "➕ Добавить подключение", callback_data: "add_connection:v1"}]])
+
+        IO.inspect({chat_id, message_id, full_text, keyboard}, label: "[ConnectionHelper] Arguments for edit_message_text")
+        result = Telegram.edit_message_text(chat_id, message_id, full_text, 
+          parse_mode: "Markdown",
+          reply_markup: %{inline_keyboard: keyboard})
+        IO.inspect(result, label: "[ConnectionHelper] Result of edit_message_text")
       end
 
       :ok
@@ -85,8 +102,6 @@ defmodule TelegramApi.Chain.ConnectionHelper do
   @spec extend_marzban_user(marzban_user(), tariff()) :: {:ok, marzban_user()} | {:error, any()}
   def extend_marzban_user(marzban_user, tariff) do
     current_expire = marzban_user["expire"] || 0
-    current_data_limit = marzban_user["data_limit"] || 0
-    new_data_limit = tariff.data_limit_bytes || 0
 
     start_time =
       if current_expire > DateTime.to_unix(DateTime.utc_now()),
@@ -95,66 +110,75 @@ defmodule TelegramApi.Chain.ConnectionHelper do
 
     new_expire = start_time + round(tariff.duration_days * 24 * 3600)
 
-    updated_data_limit =
-      if current_data_limit == 0 || new_data_limit == 0 do
-        0
-      else
-        current_data_limit + new_data_limit
-      end
-
     body = %{
       "expire" => new_expire,
-      "data_limit" => updated_data_limit
+      "data_limit" => 0
     }
 
     Marzban.modify_user(marzban_user["username"], body)
   end
 
-  @spec generate_connection_details(marzban_user()) :: map()
-  def generate_connection_details(marzban_user) do
-    subscription_url = marzban_user["subscription_url"]
+  # Private helpers
 
-    qr_code_url =
-      "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=#{URI.encode(subscription_url)}"
+  defp format_traffic(data_limit, used_traffic) do
+    used_gb = (used_traffic || 0) / (1024 * 1024 * 1024)
+    used_gb_str = :erlang.float_to_binary(used_gb, decimals: 2)
 
-    caption = """
-    *Подключение*: `#{marzban_user["username"]}`
+    limit_str = 
+      case data_limit do
+        0 -> "Безлимитно"
+        nil -> "Безлимитно"
+        limit when is_integer(limit) and limit > 0 ->
+          limit_gb = limit / (1024 * 1024 * 1024)
+          limit_gb_str = :erlang.float_to_binary(limit_gb, decimals: 2)
+          "#{limit_gb_str} GB"
+      end
 
-    *Статус*: #{format_status(marzban_user["status"])}
-    *Трафик*: #{format_traffic(marzban_user["used_traffic"])} / #{format_traffic(marzban_user["data_limit"])}
-    *Действует до*: #{format_expire_date(marzban_user["expire"])}
-
-    Для импорта отсканируйте QR-код или скопируйте ссылку ниже.
-    """
-
-    %{
-      qr_code_url: qr_code_url,
-      caption: caption,
-      subscription_url: subscription_url,
-      username: marzban_user["username"]
-    }
+    "#{used_gb_str} GB / #{limit_str}"
   end
 
-  @spec send_connection_details(integer(), map()) :: :ok
-  def send_connection_details(chat_id, details) do
+  def format_expire_date(0), do: "Никогда"
+  def format_expire_date(unix_timestamp) when is_integer(unix_timestamp) do
+    case DateTime.from_unix(unix_timestamp) do
+      {:ok, datetime} -> Calendar.strftime(datetime, "%d.%m.%Y")
+      _ -> "Неверная дата"
+    end
+  end
+
+  defp format_status("active"), do: "Активен ✅"
+  defp format_status("disabled"), do: "Отключен ❌"
+  defp format_status("expired"), do: "Истек ⏳"
+  defp format_status("limited"), do: "Ограничен 😥"
+  defp format_status(_), do: "Неизвестен"
+
+  @spec generate_connection_text(marzban_user()) :: String.t()
+  def generate_connection_text(marzban_user) do
+    # IO.inspect(marzban_user, label: "[ConnectionHelper] Generating text for marzban_user")
+    username = marzban_user["username"]
+    status = marzban_user["status"] |> format_status()
+    traffic = format_traffic(marzban_user["data_limit"], marzban_user["used_traffic"])
+    expire_date = format_expire_date(marzban_user["expire"])
+
+    """
+    *Подключение:* `#{username}`
+    *Статус:* #{status}
+    *Трафик:* #{traffic}
+    *Действует до:* #{expire_date}
+    """
+  end
+
+  @spec send_connection_card(integer(), String.t(), String.t()) :: :ok
+  def send_connection_card(chat_id, username, text) do
     keyboard = %{
       inline_keyboard: [
         [
-          %{
-            text: "Оплатить/Продлить",
-            callback_data: "view_tariffs:#{details.username}"
-          }
+          %{text: "Оплатить/Продлить", callback_data: "view_tariffs:#{username}"},
+          %{text: "Ссылка для подключения", callback_data: "show_connection_link:#{username}"}
         ]
       ]
     }
 
-    Context.send_photo(chat_id, details.qr_code_url,
-      caption: details.caption,
-      parse_mode: "Markdown",
-      reply_markup: keyboard
-    )
-
-    Context.send_message(chat_id, "`#{details.subscription_url}`", parse_mode: "Markdown")
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
     :ok
   end
 
@@ -167,27 +191,4 @@ defmodule TelegramApi.Chain.ConnectionHelper do
       0
     end
   end
-
-  def format_traffic(0), do: "Безлимитный"
-  def format_traffic(nil), do: "Безлимитный"
-
-  def format_traffic(bytes) when is_integer(bytes) do
-    gb = bytes / (1024 * 1024 * 1024)
-    "#{:erlang.float_to_binary(gb, decimals: 2)} GB"
-  end
-
-  def format_expire_date(0), do: "Никогда"
-
-  def format_expire_date(unix_timestamp) when is_integer(unix_timestamp) do
-    case DateTime.from_unix(unix_timestamp) do
-      {:ok, datetime} -> Calendar.strftime(datetime, "%d.%m.%Y")
-      _ -> "Неверная дата"
-    end
-  end
-
-  def format_status("active"), do: "Активен ✅"
-  def format_status("disabled"), do: "Отключен ❌"
-  def format_status("expired"), do: "Истек ⏳"
-  def format_status("limited"), do: "Ограничен 😥"
-  def format_status(_), do: "Неизвестен"
 end

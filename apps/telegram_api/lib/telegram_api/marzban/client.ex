@@ -1,4 +1,4 @@
-defmodule TelegramApi.Marzban do
+defmodule TelegramApi.Marzban.Client do
   @moduledoc """
   Client for the Marzban API.
   """
@@ -67,27 +67,9 @@ defmodule TelegramApi.Marzban do
 
   defp finch_name, do: Application.get_env(:telegram_api, :finch_name)
   defp base_url, do: Application.get_env(:telegram_api, :marzban)[:base_url]
-  defp username, do: Application.get_env(:telegram_api, :marzban)[:username]
-  defp password, do: Application.get_env(:telegram_api, :marzban)[:password]
-
-  defp get_admin_token do
-    url = base_url() <> "/api/admin/token"
-    headers = [{"Content-Type", "application/x-www-form-urlencoded"}]
-    body = URI.encode_query(%{username: username(), password: password()})
-    request = Finch.build(:post, url, headers, body)
-
-    case Finch.request(request, finch_name()) do
-      {:ok, %{status: 200, body: body}} ->
-        {:ok, Jason.decode!(body)["access_token"]}
-
-      other ->
-        Logger.error("Marzban token request failed: #{inspect(other)}")
-        {:error, :token_failed}
-    end
-  end
 
   defp request(method, path, body \\ nil, params \\ %{}) do
-    with {:ok, token} <- get_admin_token() do
+    with {:ok, token} <- TelegramApi.Marzban.TokenManager.get_token() do
       url = build_url(path, params)
       json_body = if body, do: Jason.encode!(body), else: nil
       headers = build_headers(token, with_content_type: not is_nil(json_body))

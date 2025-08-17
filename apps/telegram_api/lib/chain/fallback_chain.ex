@@ -7,14 +7,14 @@ defmodule TelegramApi.Chain.FallbackChain do
 
   require Logger
 
-  alias TelegramApi.Context
+  alias TelegramApi.Telegram
 
   @impl Telegex.Chain
   def handle(%Telegex.Type.Update{message: %Telegex.Type.Message{text: _text}} = update, context) do
-    with {:ok, chat_id} <- Context.get_chat_id(update) do
+    with {:ok, chat_id} <- Telegram.get_chat_id(update) do
       Task.start(fn ->
         response_text = "Я не понимаю эту команду. Пожалуйста, воспользуйтесь кнопками в меню."
-        Context.send_message(chat_id, response_text)
+        Telegram.send_message(chat_id, response_text)
       end)
     else
       error ->

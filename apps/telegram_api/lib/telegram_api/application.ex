@@ -9,7 +9,9 @@ defmodule TelegramApi.Application do
   def start(_type, _args) do
     children = [
       {Finch, name: TelegramApi.Finch},
-      TelegramApi.HookHandler
+      TelegramApi.Marzban.TokenManager,
+      TelegramApi.HookHandler,
+      {Task.Supervisor, name: TelegramApi.TaskSupervisor}
     ]
 
     opts = [strategy: :one_for_one, name: TelegramApi.Supervisor]
