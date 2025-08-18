@@ -39,7 +39,6 @@ defmodule Core.MixProject do
 
       # Utilities
       {:jason, "~> 1.4"},
-
       # Development & Testing
       {:ex_machina, "~> 2.7", only: :test}
     ]

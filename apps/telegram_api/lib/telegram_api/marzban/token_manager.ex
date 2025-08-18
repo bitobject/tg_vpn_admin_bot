@@ -7,7 +7,8 @@ defmodule TelegramApi.Marzban.TokenManager do
   require Logger
 
   @cache_key :marzban_api_token
-  @ttl :timer.minutes(55) # Marzban tokens typically last for 1 hour
+  # Marzban tokens typically last for 1 hour
+  @ttl :timer.minutes(55)
 
   # Public API
   def start_link(_opts) do

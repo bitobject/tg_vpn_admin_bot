@@ -5,22 +5,39 @@ defmodule TelegramApi.Chain.ShowConnectionLinkChain do
 
   alias TelegramApi.Marzban
   alias TelegramApi.Telegram
+  alias TelegramApi.State
 
   @impl Telegex.Chain
   def handle(
         %Telegex.Type.Update{
-          callback_query: %Telegex.Type.CallbackQuery{id: query_id, data: "show_connection_link:" <> username}
+          callback_query: %Telegex.Type.CallbackQuery{
+            id: query_id,
+            data: "show_connection_link:" <> username
+          }
         } = update,
         context
       ) do
+    Telegram.answer_callback_query(query_id)
+
     with {:ok, chat_id} <- Telegram.get_chat_id(update) do
       Task.start(fn ->
-        case Marzban.get_user(username) do
-          {:ok, marzban_user} ->
-            send_connection_details(chat_id, query_id, marzban_user)
+        case {Marzban.get_user(username), State.get_last_message_id(chat_id)} do
+          {{:ok, marzban_user}, {:ok, message_id}} ->
+            edit_message_with_connection_details(chat_id, message_id, marzban_user)
 
-          {:error, reason} ->
-            Logger.error("Failed to get user from Marzban in ShowConnectionLinkChain: #{inspect(reason)}")
+          {_, :not_found} ->
+            Logger.error("Could not find last_message_id for chat_id #{chat_id} to edit.")
+
+            Telegram.send_message(
+              chat_id,
+              "Произошла ошибка. Пожалуйста, вернитесь в главное меню и попробуйте снова."
+            )
+
+          {{:error, reason}, _} ->
+            Logger.error(
+              "Failed to get user from Marzban in ShowConnectionLinkChain: #{inspect(reason)}"
+            )
+
             Telegram.send_message(chat_id, "Не удалось получить информацию о подключении.")
         end
       end)
@@ -31,7 +48,7 @@ defmodule TelegramApi.Chain.ShowConnectionLinkChain do
 
   def handle(_update, context), do: {:ok, context}
 
-  defp send_connection_details(chat_id, query_id, marzban_user) do
+  defp edit_message_with_connection_details(chat_id, message_id, marzban_user) do
     base_url = marzban_base_url()
     relative_url = marzban_user["subscription_url"]
     full_subscription_url = base_url <> relative_url
@@ -42,15 +59,18 @@ defmodule TelegramApi.Chain.ShowConnectionLinkChain do
     caption = """
     *Подключение*: `#{marzban_user["username"]}`
 
-    Ваша ссылка на подключение отображается во всплывающем окне.
+    *Ваша ссылка:*
+    `#{full_subscription_url}`
     """
 
-    Telegram.send_photo(chat_id, qr_code_url,
-      caption: caption,
-      parse_mode: "Markdown"
-    )
+    media = %{
+      "type" => "photo",
+      "media" => qr_code_url,
+      "caption" => caption,
+      "parse_mode" => "Markdown"
+    }
 
-    Telegram.answer_callback_query(query_id, text: full_subscription_url, show_alert: true)
+    Telegram.edit_message_media(chat_id, message_id, media)
   end
 
   defp marzban_base_url do

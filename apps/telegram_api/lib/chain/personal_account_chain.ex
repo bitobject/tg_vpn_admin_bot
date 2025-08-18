@@ -10,6 +10,7 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
   alias TelegramApi.Telegram
+  alias TelegramApi.State
 
   @impl Telegex.Chain
   def handle(
@@ -38,6 +39,8 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
     # User sent a text message "Личный кабинет 💼"
     with {:ok, chat_id} <- Telegram.get_chat_id(update),
          {:ok, %{id: telegram_id}} <- Telegram.get_from(update) do
+      State.delete_qr_message_id(chat_id)
+
       # Send a temporary message and then edit it
       with {:ok, %Telegex.Type.Message{message_id: message_id}} <-
              Telegram.send_message(chat_id, "Загружаю информацию о ваших подключениях...") do
@@ -55,6 +58,8 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
     # User pressed an inline button
     with {:ok, chat_id} <- Telegram.get_chat_id(update),
          {:ok, %{id: telegram_id}} <- Telegram.get_from(update) do
+      State.delete_qr_message_id(chat_id)
+
       # Edit the existing message directly
       start_user_lookup_task(chat_id, message_id, telegram_id)
     end
@@ -94,6 +99,7 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
       kind, reason ->
         stacktrace = __STACKTRACE__
         IO.inspect({kind, reason, stacktrace}, label: "[PersonalAccountChain] CRASH IN TASK")
+
         Logger.error(
           "Error in PersonalAccountChain Task: #{kind}: #{inspect(reason)}\nStacktrace: #{inspect(stacktrace)}"
         )

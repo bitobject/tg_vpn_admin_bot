@@ -25,7 +25,9 @@ defmodule TelegramApi.Chain.RespStartChain do
             send_welcome_message(chat_id, user)
 
           {:error, changeset} ->
-            Logger.error("Failed to create or update user in RespStartChain: #{inspect(changeset)}")
+            Logger.error(
+              "Failed to create or update user in RespStartChain: #{inspect(changeset)}"
+            )
         end
       end)
     else

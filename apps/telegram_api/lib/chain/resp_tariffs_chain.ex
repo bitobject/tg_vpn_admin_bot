@@ -28,7 +28,10 @@ defmodule TelegramApi.Chain.RespTariffsChain do
 
   def handle(
         %Telegex.Type.Update{
-          callback_query: %Telegex.Type.CallbackQuery{id: query_id, data: "view_tariffs:" <> username}
+          callback_query: %Telegex.Type.CallbackQuery{
+            id: query_id,
+            data: "view_tariffs:" <> username
+          }
         } = update,
         context
       ) do
@@ -58,9 +61,13 @@ defmodule TelegramApi.Chain.RespTariffsChain do
   defp send_tariffs_for_creation(chat_id, tariffs) do
     text = "Выберите тариф для нового подключения:"
 
-    keyboard =[[%{
-      inline_keyboard: Enum.map(tariffs, &tariff_to_creation_button/1)
-    }]]
+    keyboard = [
+      [
+        %{
+          inline_keyboard: Enum.map(tariffs, &tariff_to_creation_button/1)
+        }
+      ]
+    ]
 
     Telegram.send_message(chat_id, text, reply_markup: keyboard)
   end
@@ -72,22 +79,32 @@ defmodule TelegramApi.Chain.RespTariffsChain do
   defp send_tariffs_for_payment(chat_id, tariffs, username) do
     text = "Выберите тариф для продления или оплаты:"
 
-    keyboard =[[%{
-      inline_keyboard: Enum.map(tariffs, &tariff_to_payment_button(&1, username))
-    }]]
+    keyboard = [
+      [
+        %{
+          inline_keyboard: Enum.map(tariffs, &tariff_to_payment_button(&1, username))
+        }
+      ]
+    ]
 
     Telegram.send_message(chat_id, text, reply_markup: keyboard)
   end
 
   defp tariff_to_creation_button(%Tariff{} = tariff) do
     [
-      %{text: "#{tariff.name} - #{tariff.price}₽", callback_data: "create_connection:#{tariff.id}"}
+      %{
+        text: "#{tariff.name} - #{tariff.price}₽",
+        callback_data: "create_connection:#{tariff.id}"
+      }
     ]
   end
 
   defp tariff_to_payment_button(%Tariff{} = tariff, username) do
     [
-      %{text: "#{tariff.name} - #{tariff.price}₽", callback_data: "pay_tariff:#{tariff.id}:#{username}"}
+      %{
+        text: "#{tariff.name} - #{tariff.price}₽",
+        callback_data: "pay_tariff:#{tariff.id}:#{username}"
+      }
     ]
   end
 end

@@ -65,5 +65,4 @@ defmodule Core.Context do
     |> Core.Schemas.TelegramUpdateLog.changeset(attrs)
     |> Repo.insert()
   end
-
 end

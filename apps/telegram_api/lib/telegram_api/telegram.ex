@@ -9,8 +9,13 @@ defmodule TelegramApi.Telegram do
   def get_chat_id(%Telegex.Type.Update{message: %Telegex.Type.Message{chat: %{id: chat_id}}}),
     do: {:ok, chat_id}
 
-  def get_chat_id(%Telegex.Type.Update{callback_query: %Telegex.Type.CallbackQuery{message: %Telegex.Type.Message{chat: %{id: chat_id}}}}),
-    do: {:ok, chat_id}
+  def get_chat_id(%Telegex.Type.Update{
+        callback_query: %Telegex.Type.CallbackQuery{
+          message: %Telegex.Type.Message{chat: %{id: chat_id}}
+        }
+      }),
+      do: {:ok, chat_id}
+
   def get_chat_id(%{callback_query: %{message: %{chat: %{id: id}}}}), do: {:ok, id}
   def get_chat_id(_update), do: {:error, :no_chat_id}
 
@@ -57,5 +62,23 @@ defmodule TelegramApi.Telegram do
       |> Keyword.merge(opts)
 
     Telegex.edit_message_text(text, all_opts)
+  end
+
+  @doc """
+  Edits a media message.
+  """
+  def edit_message_media(chat_id, message_id, media, opts \\ []) do
+    all_opts =
+      [chat_id: chat_id, message_id: message_id]
+      |> Keyword.merge(opts)
+
+    Telegex.edit_message_media(media, all_opts)
+  end
+
+  @doc """
+  Deletes a message.
+  """
+  def delete_message(chat_id, message_id) do
+    Telegex.delete_message(chat_id, message_id)
   end
 end

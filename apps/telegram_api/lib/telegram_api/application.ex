@@ -11,7 +11,8 @@ defmodule TelegramApi.Application do
       {Finch, name: TelegramApi.Finch},
       TelegramApi.Marzban.TokenManager,
       TelegramApi.HookHandler,
-      {Task.Supervisor, name: TelegramApi.TaskSupervisor}
+      {Task.Supervisor, name: TelegramApi.TaskSupervisor},
+      TelegramApi.State
     ]
 
     opts = [strategy: :one_for_one, name: TelegramApi.Supervisor]

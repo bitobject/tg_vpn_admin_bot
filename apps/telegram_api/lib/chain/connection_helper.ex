@@ -2,73 +2,87 @@ defmodule TelegramApi.Chain.ConnectionHelper do
   require Logger
   alias TelegramApi.Telegram
   alias TelegramApi.Marzban
+  alias TelegramApi.State
 
   @type marzban_user :: map()
   @type tariff :: map()
 
-  @spec process_user_connections(integer(), any(), integer()) :: :ok | :failed_to_fetch
-  def process_user_connections(chat_id, user, message_id) do
-    IO.inspect({chat_id, user, message_id}, label: "[ConnectionHelper] Entered process_user_connections")
+  @spec process_user_connections(integer(), any(), integer()) :: :ok
+  def process_user_connections(chat_id, user, loading_message_id) do
     marzban_usernames = user.marzban_users
-    IO.inspect(marzban_usernames, label: "[ConnectionHelper] Usernames to process")
+
+    # First, delete the "Loading..." message
+    Telegram.delete_message(chat_id, loading_message_id)
 
     if Enum.empty?(marzban_usernames) do
-      Telegram.edit_message_text(
+      send_add_connection_button(
         chat_id,
-        message_id,
-        "У вас еще нет активных подключений. Вы можете создать новое в меню тарифов."
+        "У вас еще нет подключений. Вы можете создать новое в меню тарифов."
       )
-
-      :ok
     else
+      # Fetch all user data concurrently
       tasks =
         Enum.map(marzban_usernames, fn username ->
-          Task.async(fn -> {username, Marzban.get_user(username)} end)
+          Task.async(fn -> Marzban.get_user(username) end)
         end)
 
       results = Task.await_many(tasks, 30000)
-      IO.inspect(results, label: "[ConnectionHelper] Marzban API results")
 
-      {ok_results, error_results} =
-        Enum.split_with(results, fn
-          {_username, {:ok, _user}} -> true
+      # Filter for successfully fetched users
+      users =
+        Enum.filter(results, fn
+          {:ok, _} -> true
           _ -> false
         end)
+        |> Enum.map(fn {:ok, u} -> u end)
 
-      unless Enum.empty?(error_results) do
-        Logger.error("Failed to fetch some users from Marzban: #{inspect(error_results)}")
-      end
-
-      if Enum.empty?(ok_results) and not Enum.empty?(marzban_usernames) do
-        Telegram.edit_message_text(
+      if Enum.empty?(users) do
+        Telegram.send_message(
           chat_id,
-          message_id,
           "Не удалось загрузить информацию о ваших подключениях. Попробуйте позже."
         )
       else
-        users = Enum.map(ok_results, fn {_username, {:ok, user}} -> user end)
-        IO.inspect(users, label: "[ConnectionHelper] Parsed Marzban users")
+        # Send a separate message for each connection
+        for marzban_user <- users do
+          text = generate_connection_text(marzban_user)
 
-        # Consolidate all connections into one message
-        full_text =
-          users
-          |> Enum.map(&generate_connection_text(&1))
-          |> Enum.join("\n\n#{String.duplicate("—", 20)}\n\n")
-        IO.inspect(full_text, label: "[ConnectionHelper] Final text to be sent")
+          keyboard = %{
+            inline_keyboard: [
+              [
+                %{
+                  text: "🔗 Получить ссылки (#{marzban_user["username"]})",
+                  callback_data: "show_connection_link:#{marzban_user["username"]}"
+                }
+              ]
+            ]
+          }
 
-        keyboard = 
-          (Enum.map(users, fn user ->
-            [%{text: "🔗 Получить ссылки (#{user["username"]})", callback_data: "show_connection_link:#{user["username"]}"}]
-          end) ++ [[%{text: "➕ Добавить подключение", callback_data: "add_connection:v1"}]])
-
-        IO.inspect({chat_id, message_id, full_text, keyboard}, label: "[ConnectionHelper] Arguments for edit_message_text")
-        result = Telegram.edit_message_text(chat_id, message_id, full_text, 
-          parse_mode: "Markdown",
-          reply_markup: %{inline_keyboard: keyboard})
-        IO.inspect(result, label: "[ConnectionHelper] Result of edit_message_text")
+          Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
+        end
       end
 
-      :ok
+      # Finally, send the 'Add Connection' button and store its ID
+      send_add_connection_button(chat_id, "Вы можете добавить еще одно подключение.")
+    end
+
+    :ok
+  end
+
+  defp send_add_connection_button(chat_id, text) do
+    case Telegram.send_message(chat_id, text,
+           reply_markup: %{
+             inline_keyboard: [
+               [%{text: "➕ Добавить подключение", callback_data: "add_connection:v1"}]
+             ]
+           }
+         ) do
+      {:ok, %Telegex.Type.Message{message_id: message_id}} ->
+        State.set_last_message_id(chat_id, message_id)
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to send 'Add Connection' button and store message_id: #{inspect(reason)}"
+        )
     end
   end
 
@@ -124,10 +138,14 @@ defmodule TelegramApi.Chain.ConnectionHelper do
     used_gb = (used_traffic || 0) / (1024 * 1024 * 1024)
     used_gb_str = :erlang.float_to_binary(used_gb, decimals: 2)
 
-    limit_str = 
+    limit_str =
       case data_limit do
-        0 -> "Безлимитно"
-        nil -> "Безлимитно"
+        0 ->
+          "Безлимитно"
+
+        nil ->
+          "Безлимитно"
+
         limit when is_integer(limit) and limit > 0 ->
           limit_gb = limit / (1024 * 1024 * 1024)
           limit_gb_str = :erlang.float_to_binary(limit_gb, decimals: 2)
@@ -138,6 +156,7 @@ defmodule TelegramApi.Chain.ConnectionHelper do
   end
 
   def format_expire_date(0), do: "Никогда"
+
   def format_expire_date(unix_timestamp) when is_integer(unix_timestamp) do
     case DateTime.from_unix(unix_timestamp) do
       {:ok, datetime} -> Calendar.strftime(datetime, "%d.%m.%Y")
