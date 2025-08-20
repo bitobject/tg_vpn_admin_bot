@@ -54,7 +54,7 @@ defmodule TelegramApi.Chain.ShowConnectionLinkChain do
 
   def handle(_update, context), do: {:ok, context}
 
-  defp build_connection_link_content(marzban_user) do
+  def build_connection_link_content(marzban_user) do
     username = marzban_user["username"]
     subscription_url = marzban_user["subscription_url"]
     status = ConnectionHelper.format_status(marzban_user["status"])

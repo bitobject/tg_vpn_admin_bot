@@ -10,9 +10,6 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
   alias TelegramApi.Telegram
-  alias TelegramApi.State
-
-  @impl Telegex.Chain
 
   @impl Telegex.Chain
   def handle(
@@ -24,7 +21,6 @@ defmodule TelegramApi.Chain.PersonalAccountChain do
     process_request(update, context)
   end
 
-  @impl Telegex.Chain
   def handle(
         %Telegex.Type.Update{
           callback_query: %Telegex.Type.CallbackQuery{id: query_id, data: "personal_account"}

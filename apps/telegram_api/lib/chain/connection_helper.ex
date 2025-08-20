@@ -1,7 +1,5 @@
 defmodule TelegramApi.Chain.ConnectionHelper do
   require Logger
-  alias TelegramApi.Telegram
-  alias TelegramApi.State
   alias TelegramApi.Marzban
 
   @type marzban_user :: map()

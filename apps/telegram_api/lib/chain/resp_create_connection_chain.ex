@@ -5,6 +5,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
 
   alias Core.Context, as: CoreContext
   alias TelegramApi.Chain.ConnectionHelper
+  alias TelegramApi.Chain.ShowConnectionLinkChain
   alias TelegramApi.Telegram
 
   @impl Telegex.Chain
@@ -12,7 +13,8 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
         %Telegex.Type.Update{
           callback_query: %Telegex.Type.CallbackQuery{
             id: query_id,
-            data: "create_connection:" <> tariff_id_str
+            data: "create_connection:" <> tariff_id_str,
+            message: %{message_id: message_id}
           }
         } = update,
         context
@@ -39,7 +41,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
 
         case CoreContext.create_or_update_user(attrs) do
           {:ok, user} ->
-            process_connection_creation(chat_id, user, tariff_id)
+            process_connection_creation(chat_id, message_id, user, tariff_id)
 
           {:error, changeset} ->
             Logger.error("Failed to create or update user: #{inspect(changeset)}")
@@ -88,7 +90,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
 
   def handle(_update, context), do: {:ok, context}
 
-  defp process_connection_creation(chat_id, user, tariff_id) do
+  defp process_connection_creation(chat_id, message_id, user, tariff_id) do
     Logger.info(
       "[RespCreateConnectionChain] Processing connection creation for user #{user.username} and tariff #{tariff_id}"
     )
@@ -109,7 +111,7 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
             )
 
             CoreContext.add_marzban_user_to_telegram_user(user, marzban_user["username"])
-            send_success_message(chat_id, marzban_user)
+            send_success_message(chat_id, message_id, marzban_user)
 
           {:error, reason} ->
             Logger.error("Failed to create Marzban user: #{inspect(reason)}")
@@ -118,17 +120,17 @@ defmodule TelegramApi.Chain.RespCreateConnectionChain do
     end
   end
 
-  defp send_success_message(chat_id, marzban_user) do
-    Telegram.send_message(chat_id, "✅ *Ваше новое подключение создано!*", parse_mode: "Markdown")
-    text = ConnectionHelper.generate_connection_text(marzban_user)
-    {_text, keyboard} = ConnectionHelper.build_connection_card(marzban_user)
-
-    ConnectionHelper.send_connection_message_and_store_id(
-      chat_id,
-      text,
-      keyboard,
-      marzban_user["username"]
+  defp send_success_message(chat_id, message_id, marzban_user) do
+    Logger.info(
+      "[RespCreateConnectionChain] Sending success message for #{marzban_user["username"]}"
     )
+
+    # Delete the message with the tariff list
+    Telegram.delete_message(chat_id, message_id)
+
+    # Send a new message with the connection details
+    {text, keyboard} = ShowConnectionLinkChain.build_connection_link_content(marzban_user)
+    Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
   end
 
   defp send_error_message(chat_id, reason) do
