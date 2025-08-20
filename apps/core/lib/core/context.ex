@@ -65,4 +65,12 @@ defmodule Core.Context do
     |> Core.Schemas.TelegramUpdateLog.changeset(attrs)
     |> Repo.insert()
   end
+
+  def remove_marzban_user_from_user(user, marzban_username) do
+    updated_users = Enum.reject(user.marzban_users, &(&1 == marzban_username))
+
+    user
+    |> User.changeset(%{marzban_users: updated_users})
+    |> Repo.update()
+  end
 end

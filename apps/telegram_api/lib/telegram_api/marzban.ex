@@ -28,6 +28,11 @@ defmodule TelegramApi.Marzban do
   defdelegate modify_user(username, body), to: Client
 
   @doc """
+  Delegates to `TelegramApi.Marzban.Client.remove_user/1`.
+  """
+  defdelegate remove_user(username), to: Client
+
+  @doc """
   Delegates to `TelegramApi.Marzban.Client.get_next_username_for/1`.
   """
   defdelegate get_next_username_for(base_username), to: Client

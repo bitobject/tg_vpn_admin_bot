@@ -53,7 +53,7 @@ defmodule TelegramApi.Chain.RespPayTariffChain do
     with {:ok, tariff} <- get_tariff(tariff_id),
          {:ok, marzban_user} <- Marzban.get_user(username),
          {:ok, updated_marzban_user} <- ConnectionHelper.extend_marzban_user(marzban_user, tariff) do
-      send_success_message(chat_id, updated_marzban_user)
+      send_success_message(chat_id, updated_marzban_user, tariff)
     else
       {:error, :tariff_not_found} ->
         send_error_message(chat_id, "Выбранный тариф не найден.")
@@ -82,11 +82,12 @@ defmodule TelegramApi.Chain.RespPayTariffChain do
     end
   end
 
-  defp send_success_message(chat_id, marzban_user) do
+  defp send_success_message(chat_id, marzban_user, tariff) do
     expire_date_str = ConnectionHelper.format_expire_date(marzban_user["expire"])
+    username = marzban_user["username"]
 
     text = """
-    ✅ *Подписка успешно продлена!*
+    ✅ Подписка "#{tariff.name}" для `#{username}` успешно продлена!
 
     Новая дата окончания: *#{expire_date_str}*
     """

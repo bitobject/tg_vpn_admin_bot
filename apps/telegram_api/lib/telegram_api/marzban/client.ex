@@ -31,6 +31,11 @@ defmodule TelegramApi.Marzban.Client do
     request(:put, "/api/user/#{username}", body)
   end
 
+  @spec remove_user(String.t()) :: response()
+  def remove_user(username) do
+    request(:delete, "/api/user/#{username}")
+  end
+
   @spec get_next_username_for(String.t()) :: {:ok, String.t()} | {:error, any()}
   def get_next_username_for(base_username) do
     with {:ok, %{"users" => all_users}} <- get_users() do
@@ -77,6 +82,9 @@ defmodule TelegramApi.Marzban.Client do
       finch_request = Finch.build(method, url, headers, json_body)
 
       case Finch.request(finch_request, finch_name()) do
+        {:ok, %{status: 200, body: _}} when method == :delete ->
+          :ok
+
         {:ok, %{status: status, body: resp_body}} when status in [200, 201] ->
           {:ok, Jason.decode!(resp_body)}
 

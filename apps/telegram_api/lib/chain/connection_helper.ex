@@ -1,89 +1,54 @@
 defmodule TelegramApi.Chain.ConnectionHelper do
   require Logger
   alias TelegramApi.Telegram
-  alias TelegramApi.Marzban
   alias TelegramApi.State
+  alias TelegramApi.Marzban
 
   @type marzban_user :: map()
   @type tariff :: map()
 
-  @spec process_user_connections(integer(), any(), integer()) :: :ok
-  def process_user_connections(chat_id, user, loading_message_id) do
+  @spec build_personal_account_content(any()) :: {String.t(), map()}
+  def build_personal_account_content(user) do
     marzban_usernames = user.marzban_users
 
-    # First, delete the "Loading..." message
-    Telegram.delete_message(chat_id, loading_message_id)
+    tasks =
+      Enum.map(marzban_usernames, fn username ->
+        Task.async(fn -> Marzban.get_user(username) end)
+      end)
 
-    if Enum.empty?(marzban_usernames) do
-      send_add_connection_button(
-        chat_id,
-        "У вас еще нет подключений. Вы можете создать новое в меню тарифов."
-      )
-    else
-      # Fetch all user data concurrently
-      tasks =
-        Enum.map(marzban_usernames, fn username ->
-          Task.async(fn -> Marzban.get_user(username) end)
-        end)
+    results = Task.await_many(tasks, 30000)
 
-      results = Task.await_many(tasks, 30000)
+    connection_rows =
+      results
+      |> Enum.filter(fn
+        {:ok, _} -> true
+        _ -> false
+      end)
+      |> Enum.map(fn {:ok, u} -> u end)
+      |> Enum.flat_map(&build_connection_keyboard_rows(&1))
 
-      # Filter for successfully fetched users
-      users =
-        Enum.filter(results, fn
-          {:ok, _} -> true
-          _ -> false
-        end)
-        |> Enum.map(fn {:ok, u} -> u end)
+    add_connection_button = [
+      %{text: "➕ Добавить подключение", callback_data: "add_connection:new"}
+    ]
 
-      if Enum.empty?(users) do
-        Telegram.send_message(
-          chat_id,
-          "Не удалось загрузить информацию о ваших подключениях. Попробуйте позже."
-        )
-      else
-        # Send a separate message for each connection
-        for marzban_user <- users do
-          text = generate_connection_text(marzban_user)
+    keyboard_rows = connection_rows ++ [add_connection_button]
 
-          keyboard = %{
-            inline_keyboard: [
-              [
-                %{
-                  text: "🔗 Получить ссылки (#{marzban_user["username"]})",
-                  callback_data: "show_connection_link:#{marzban_user["username"]}"
-                }
-              ]
-            ]
-          }
+    text =
+      if Enum.empty?(connection_rows),
+        do: "У вас нет активных подключений.",
+        else: "Личный кабинет"
 
-          Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
-        end
-      end
-
-      # Finally, send the 'Add Connection' button and store its ID
-      send_add_connection_button(chat_id, "Вы можете добавить еще одно подключение.")
-    end
-
-    :ok
+    keyboard = %{inline_keyboard: keyboard_rows}
+    {text, keyboard}
   end
 
-  defp send_add_connection_button(chat_id, text) do
-    case Telegram.send_message(chat_id, text,
-           reply_markup: %{
-             inline_keyboard: [
-               [%{text: "➕ Добавить подключение", callback_data: "add_connection:v1"}]
-             ]
-           }
-         ) do
-      {:ok, %Telegex.Type.Message{message_id: message_id}} ->
-        State.set_last_message_id(chat_id, message_id)
+  def build_connection_keyboard_rows(marzban_user) do
+    username = marzban_user["username"]
+    status_emoji = format_status_to_emoji(marzban_user["status"])
 
-      {:error, reason} ->
-        Logger.error(
-          "Failed to send 'Add Connection' button and store message_id: #{inspect(reason)}"
-        )
-    end
+    [
+      [%{text: "#{status_emoji} #{username}", callback_data: "show_connection_link:#{username}"}]
+    ]
   end
 
   @spec extend_marzban_user(marzban_user(), tariff()) :: {:ok, marzban_user()} | {:error, any()}
@@ -164,11 +129,17 @@ defmodule TelegramApi.Chain.ConnectionHelper do
     end
   end
 
-  defp format_status("active"), do: "Активен ✅"
-  defp format_status("disabled"), do: "Отключен ❌"
-  defp format_status("expired"), do: "Истек ⏳"
-  defp format_status("limited"), do: "Ограничен 😥"
-  defp format_status(_), do: "Неизвестен"
+  def format_status("active"), do: "Активен ✅"
+  def format_status("disabled"), do: "Отключен ❌"
+  def format_status("expired"), do: "Истек ⏳"
+  def format_status("limited"), do: "Ограничен 😥"
+  def format_status(_), do: "Неизвестен"
+
+  defp format_status_to_emoji("active"), do: "✅"
+  defp format_status_to_emoji("disabled"), do: "❌"
+  defp format_status_to_emoji("expired"), do: "⏳"
+  defp format_status_to_emoji("limited"), do: "😥"
+  defp format_status_to_emoji(_), do: ""
 
   @spec generate_connection_text(marzban_user()) :: String.t()
   def generate_connection_text(marzban_user) do
@@ -184,21 +155,6 @@ defmodule TelegramApi.Chain.ConnectionHelper do
     *Трафик:* #{traffic}
     *Действует до:* #{expire_date}
     """
-  end
-
-  @spec send_connection_card(integer(), String.t(), String.t()) :: :ok
-  def send_connection_card(chat_id, username, text) do
-    keyboard = %{
-      inline_keyboard: [
-        [
-          %{text: "Оплатить/Продлить", callback_data: "view_tariffs:#{username}"},
-          %{text: "Ссылка для подключения", callback_data: "show_connection_link:#{username}"}
-        ]
-      ]
-    }
-
-    Telegram.send_message(chat_id, text, parse_mode: "Markdown", reply_markup: keyboard)
-    :ok
   end
 
   def tariff_to_expire(tariff) do

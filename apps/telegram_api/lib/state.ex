@@ -27,13 +27,13 @@ defmodule TelegramApi.State do
   end
 
   # Last Message ID
-  def set_last_message_id(chat_id, message_id) do
-    :ets.insert(@last_message_table_name, {chat_id, message_id})
+  def set_last_message_id(chat_id, message_id, key \\ :default) do
+    :ets.insert(@last_message_table_name, {{chat_id, key}, message_id})
   end
 
-  def get_last_message_id(chat_id) do
-    case :ets.lookup(@last_message_table_name, chat_id) do
-      [{^chat_id, message_id}] -> {:ok, message_id}
+  def get_last_message_id(chat_id, key \\ :default) do
+    case :ets.lookup(@last_message_table_name, {chat_id, key}) do
+      [{_, message_id}] -> {:ok, message_id}
       [] -> :not_found
     end
   end

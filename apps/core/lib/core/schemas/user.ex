@@ -12,6 +12,7 @@ defmodule Core.Schemas.User do
     field(:first_name, :string)
     field(:last_name, :string)
     field(:language_code, :string)
+    field(:is_bot, :boolean, default: false)
 
     # List of usernames created for this user in Marzban
     field(:marzban_users, {:array, :string}, default: [])
@@ -28,7 +29,8 @@ defmodule Core.Schemas.User do
       :first_name,
       :last_name,
       :language_code,
-      :marzban_users
+      :marzban_users,
+      :is_bot
     ])
     |> validate_required([:username, :telegram_id, :first_name])
     |> unique_constraint(:telegram_id, name: :telegram_users_id_index)

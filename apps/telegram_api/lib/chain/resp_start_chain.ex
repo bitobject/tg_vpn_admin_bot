@@ -17,7 +17,8 @@ defmodule TelegramApi.Chain.RespStartChain do
           username: username,
           first_name: from.first_name,
           last_name: from.last_name,
-          language_code: from.language_code
+          language_code: from.language_code,
+          is_bot: from.is_bot
         }
 
         case CoreContext.create_or_update_user(attrs) do
@@ -71,7 +72,7 @@ defmodule TelegramApi.Chain.RespStartChain do
     %{
       keyboard: [
         [%{text: "Личный кабинет 💼"}],
-        [%{text: "Тарифы 💳"}, %{text: "Поддержка 🆘"}]
+        [%{text: "Инструкция 📖", url: "https://google.com"}, %{text: "Поддержка 🆘"}]
       ],
       resize_keyboard: true,
       one_time_keyboard: false
